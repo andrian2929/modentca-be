@@ -8,7 +8,7 @@ const {
 
 const router = Router();
 
-router.get("/province", getProvince);
+router.get("/provinces", getProvince);
 router.get("/province/:provinceId/cities/", getCity);
 router.get("/city/:cityId/districts", getDistrict);
 router.get("/district/:districtId/sub-districts", getSubDistrict);

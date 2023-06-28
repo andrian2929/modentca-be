@@ -26,7 +26,7 @@ const getCity = async (req, res) => {
   const { provinceId } = req.params;
 
   try {
-    const response = await axios.get(
+    const response = await options.request.get(
       `https://sig.bps.go.id/rest-bridging/getwilayah?level=kabupaten&parent=${provinceId}`
     );
     const cities = responseFormatter(response);
@@ -39,7 +39,7 @@ const getCity = async (req, res) => {
 const getDistrict = async (req, res) => {
   const { cityId } = req.params;
   try {
-    const response = await axios.get(
+    const response = await options.request.get(
       `https://sig.bps.go.id/rest-bridging/getwilayah?level=kecamatan&parent=${cityId}`
     );
 
@@ -53,7 +53,7 @@ const getDistrict = async (req, res) => {
 const getSubDistrict = async (req, res) => {
   const { districtId } = req.params;
   try {
-    const response = await axios.get(
+    const response = await options.request.get(
       `https://sig.bps.go.id/rest-bridging/getwilayah?level=desa&parent=${districtId}`
     );
 
