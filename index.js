@@ -9,6 +9,8 @@ require("./src/config/firebase/firebase");
 require("./src/config/db");
 require("./src/config/time");
 
+const PORT = process.env.PORT || 3000;
+
 const app = express();
 app.use(cors({ credentials: true }));
 app.use(compression());
@@ -18,6 +20,6 @@ app.use(routes);
 
 const server = http.createServer(app);
 
-server.listen(3000, () => {
-  console.log("Server is listening on port 3000");
+server.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
 });
