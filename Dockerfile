@@ -18,15 +18,16 @@ RUN apk add --no-cache \
     nano \
     tzdata \
     && rm -rf /var/cache/apk/*
-    
-COPY . /app
 
-COPY package.json /app/package.json
+COPY package*.json ./
 
 RUN npm install
 
-CMD ["npm", "start"]
+COPY . /app
 
 EXPOSE 3000
+
+CMD ["npm", "start"]
+
 
 
