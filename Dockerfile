@@ -19,11 +19,11 @@ RUN apk add --no-cache \
     tzdata \
     && rm -rf /var/cache/apk/*
 
-COPY package*.json ./
+COPY package.json ./
 
 RUN npm install
 
-COPY . /app
+COPY . .
 
 EXPOSE 3000
 
