@@ -1,9 +1,14 @@
 const axios = require("axios");
+const https = require("https");
+const agent = new https.Agent({
+  rejectUnauthorized: false,
+});
 
 const getProvince = async (req, res) => {
   try {
     const response = await axios.get(
-      "https://sig.bps.go.id/rest-bridging/getwilayah?level=provinsi"
+      "https://sig.bps.go.id/rest-bridging/getwilayah?level=provinsi",
+      { httpsAgent: agent }
     );
     const provinces = responseFormatter(response);
     return res.status(200).json({ message: "OK", data: provinces });
