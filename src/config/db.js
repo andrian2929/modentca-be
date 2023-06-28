@@ -6,7 +6,7 @@ const env = require("./env");
  *
  * @async
  * @function connectDB
- * @returns {Promise<void>}
+ * @returns {void}
  * @throws {Error} - If there is an error connecting to MongoDB
  */
 const connectDB = async () => {

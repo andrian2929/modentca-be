@@ -100,9 +100,61 @@ const loginUserSchema = Joi.object({
   "object.unknown": "UNKNOWN_FIELD_FOUND",
 });
 
+const verifyEmailSchema = Joi.object({
+  email: joi.string().max(255).email().required().messages({
+    "string.base": "EMAIL_MUST_BE_STRING",
+    "any.required": "EMAIL_REQUIRED",
+    "string.email": "EMAIL_INVALID",
+    "string.max": "EMAIL_MAX_255",
+    "string.empty": "EMAIL_REQUIRED",
+  }),
+}).messages({
+  "object.unknown": "UNKNOWN_FIELD_FOUND",
+});
+
+const updatePasswordSchema = Joi.object({
+  currentPassword: joi.string().required().messages({
+    "string.base": "CURRENT_PASSWORD_MUST_BE_STRING",
+    "any.required": "CURRENT_PASSWORD_REQUIRED",
+    "string.empty": "CURRENT_PASSWORD_REQUIRED",
+  }),
+  newPassword: joi.string().max(255).required().messages({
+    "string.base": "NEW_PASSWORD_MUST_BE_STRING",
+    "any.required": "NEW_PASSWORD_REQUIRED",
+    "string.max": "NEW_PASSWORD_MAX_255",
+    "string.empty": "NEW_PASSWORD_REQUIRED",
+  }),
+}).messages({});
+
+const forgotPasswordSchema = Joi.object({
+  email: joi.string().max(255).email().required().messages({
+    "string.base": "EMAIL_MUST_BE_STRING",
+    "any.required": "EMAIL_REQUIRED",
+    "string.email": "EMAIL_INVALID",
+    "string.max": "EMAIL_MAX_255",
+    "string.empty": "EMAIL_REQUIRED",
+  }),
+}).messages({
+  "object.unknown": "UNKNOWN_FIELD_FOUND",
+});
+
+const signInWithGoogleSchema = Joi.object({
+  idToken: joi.string().required().messages({
+    "string.base": "ID_TOKEN_MUST_BE_STRING",
+    "any.required": "ID_TOKEN_REQUIRED",
+    "string.empty": "ID_TOKEN_REQUIRED",
+  }),
+}).messages({
+  "object.unknown": "UNKNOWN_FIELD_FOUND",
+});
+
 const authValidation = {
   signUp: (data) => registerUserSchema.validate(data),
   signIn: (data) => loginUserSchema.validate(data),
+  verifyEmail: (data) => verifyEmailSchema.validate(data),
+  updatePassword: (data) => updatePasswordSchema.validate(data),
+  forgotPassword: (data) => forgotPasswordSchema.validate(data),
+  signInWithGoogle: (data) => signInWithGoogleSchema.validate(data),
 };
 
 module.exports = authValidation;

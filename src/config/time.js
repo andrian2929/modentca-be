@@ -5,4 +5,6 @@ const { APP_TIMEZONE } = env;
 
 Settings.defaultZone = APP_TIMEZONE;
 
+console.log(DateTime.local().toISO());
+
 module.exports = DateTime;

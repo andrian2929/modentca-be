@@ -7,9 +7,9 @@ const cors = require("cors");
 const routes = require("./src/routes");
 require("./src/config/firebase/firebase");
 require("./src/config/db");
+require("./src/config/time");
 
 const app = express();
-
 app.use(cors({ credentials: true }));
 app.use(compression());
 app.use(cookieParser());

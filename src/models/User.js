@@ -13,12 +13,12 @@ const ParentSchema = new Schema({
 
 const UserSchema = new Schema(
   {
-    firstName: { type: String, required: true },
+    firstName: { type: String, required: null },
     lastName: { type: String, default: null },
-    parentEmail: { type: String, unique: true },
-    birthDate: { type: Date, required: true },
+    parentEmail: { type: String, unique: true, required: true },
+    birthDate: { type: Date, default: null },
     image: { type: String, default: null },
-    sex: { type: String, enum: ["L", "P"], required: true },
+    sex: { type: String, enum: ["L", "P", null], default: null },
     role: {
       type: String,
       enum: ["user", "health_care", "email"],

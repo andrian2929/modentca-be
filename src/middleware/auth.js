@@ -10,13 +10,16 @@ const { getAuth } = require("firebase/auth");
  * @returns {Promise<void>}
  */
 const verifyToken = (req, res, next) => {
+  const auth = getAuth();
   if (
-    (!req.headers.authorization ||
-      !req.headers.authorization.startsWith("Bearer ")) &&
-    !getAuth().currentUser
-  ) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
+    !req.headers.authorization ||
+    !req.headers.authorization.startsWith("Bearer ")
+  )
+    return res.status(401).json({ error: { message: "UNAUTHORIZED" } });
+
+  if (!auth.currentUser)
+    return res.status(401).json({ error: { message: "UNAUTHORIZED" } });
+
   try {
     const token = req.headers.authorization.split("Bearer ")[1];
     const decoded = jwt.verify(token, env.JWT_SECRET);
@@ -25,9 +28,9 @@ const verifyToken = (req, res, next) => {
   } catch (err) {
     switch (err.name) {
       case "TokenExpiredError":
-        return res.status(401).json({ message: "TOKEN_EXPIRED" });
+        return res.status(401).json({ error: { message: "TOKEN_EXPIRED" } });
       case "JsonWebTokenError":
-        return res.status(401).json({ message: "TOKEN_INVALID" });
+        return res.status(401).json({ error: { message: "INVALID_TOKEN" } });
       default:
         return res.status(500).json(err);
     }
