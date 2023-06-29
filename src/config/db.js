@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const env = require("./env");
+const mongoose = require('mongoose')
+const env = require('./env')
 
 /**
  * Establish a connection to MongoDB
@@ -11,11 +11,11 @@ const env = require("./env");
  */
 const connectDB = async () => {
   try {
-    await mongoose.connect(env.MONGO_URI);
-    console.log("MongoDB connected");
+    await mongoose.connect(env.MONGO_URI)
+    console.log('MongoDB connected')
   } catch (err) {
-    console.log(err.message);
+    console.log(err.message)
   }
-};
+}
 
-connectDB();
+connectDB()

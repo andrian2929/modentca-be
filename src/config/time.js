@@ -1,10 +1,10 @@
-const { Settings, DateTime } = require("luxon");
-const env = require("./env");
+const { Settings, DateTime } = require('luxon')
+const env = require('./env')
 
-const { APP_TIMEZONE } = env;
+const { APP_TIMEZONE } = env
 
-Settings.defaultZone = APP_TIMEZONE;
+Settings.defaultZone = APP_TIMEZONE
 
-console.log(DateTime.local().toISO());
+console.log(DateTime.local().toISO())
 
-module.exports = DateTime;
+module.exports = DateTime

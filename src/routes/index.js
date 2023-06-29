@@ -1,16 +1,14 @@
-const { Router } = require("express");
-const authRoutes = require("./auth");
-const addressRoutes = require("./address");
+const { Router } = require('express')
+const authRoutes = require('./auth')
+const addressRoutes = require('./address')
+const profileRoutes = require('./userProfile')
+const entryRoutes = require('./entry')
 
-const router = Router();
+const router = Router()
 
-router.use("/auth", authRoutes);
-router.use("/address", addressRoutes);
-router.get("/ping", (req, res) => {
-  res.json({ message: "PONG" });
-});
-router.use((req, res) => {
-  res.status(404).json({ error: "Not Found" });
-});
+router.use('/auth', authRoutes)
+router.use('/user-profile', profileRoutes)
+router.use('/address', addressRoutes)
+router.use('/', entryRoutes)
 
-module.exports = router;
+module.exports = router

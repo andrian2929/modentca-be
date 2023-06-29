@@ -1,5 +1,5 @@
-const { initializeApp } = require("firebase/app");
-const env = require("../env");
+const { initializeApp } = require('firebase/app')
+const env = require('../env')
 
 const firebaseConfig = {
   apiKey: env.FIREBASE_API_KEY,
@@ -8,7 +8,7 @@ const firebaseConfig = {
   storageBucket: env.FIREBASE_STORAGE_BUCKET,
   messagingSenderId: env.FIREBASE_MESSAGING_SENDER_ID,
   appId: env.FIREBASE_APP_ID,
-  measurementId: env.FIREBASE_MEASUREMENT_ID,
-};
+  measurementId: env.FIREBASE_MEASUREMENT_ID
+}
 
-const app = initializeApp(firebaseConfig);
+initializeApp(firebaseConfig)
