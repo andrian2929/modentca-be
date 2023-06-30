@@ -8,11 +8,11 @@ const {
   signInWithEmailAndPassword: firebaseSignIn,
   signInWithCredential: firebaseSignInWithCredential,
   GoogleAuthProvider,
+  EmailAuthProvider,
   sendEmailVerification: firebaseSendEmailVerification,
   signOut: firebaseSignOut,
   reauthenticateWithCredential: firebaseReauthenticateUser,
   sendPasswordResetEmail: firebaseSendPasswordResetEmail,
-  EmailAuthProvider,
   deleteUser: firebaseDeleteUser,
   updatePassword: firebaseUpdatePassword
 } = require('firebase/auth')
@@ -88,6 +88,9 @@ const signIn = async (req, res) => {
     const userCredential = await firebaseSignIn(auth, email, password)
 
     const authenticatedUser = userCredential.user
+    const accessToken = await authenticatedUser.getIdToken()
+
+    const expirationTime = authenticatedUser.stsTokenManager.expirationTime
 
     const user = await UserModel.findOne({
       parentEmail: authenticatedUser.email
@@ -95,12 +98,10 @@ const signIn = async (req, res) => {
 
     user.emailVerified = authenticatedUser.emailVerified
 
-    const { _id, role } = user
-    const token = jwt.sign({ _id, role }, env.JWT_SECRET, { expiresIn: '7d' })
     return res.status(200).json({
       message: 'OK',
-      data: user,
-      token
+      accessToken,
+      expirationTime
     })
   } catch (err) {
     if (err.name === 'FirebaseError') {
@@ -214,7 +215,6 @@ const reauthenticateUser = async (req, res) => {
       const { errorMessage, statusCode } = firebaseAuthErrorCodes(err)
       return res.status(statusCode).json({ error: { message: errorMessage } })
     }
-
     return res
       .status(500)
       .json({ error: { message: 'INTERNAL_SERVER_ERROR' } })

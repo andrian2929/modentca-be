@@ -1,6 +1,6 @@
-const jwt = require('jsonwebtoken')
-const env = require('../config/env')
-const { getAuth } = require('firebase/auth')
+const admin = require('../config/firebase/firebase-admin')
+const userModel = require('../models/User')
+const firebaseAuthErrorCodes = require('../utils/firebaseAuthErrorCodes')
 
 /**
  * Middleware function to verify the authorization token.
@@ -9,29 +9,22 @@ const { getAuth } = require('firebase/auth')
  * @param {Object} next - Express next middleware function.
  * @returns {Promise<void>}
  */
-const verifyToken = (req, res, next) => {
-  const auth = getAuth()
+const verifyToken = async (req, res, next) => {
   if (
     !req.headers.authorization ||
     !req.headers.authorization.startsWith('Bearer ')
   ) { return res.status(401).json({ error: { message: 'UNAUTHORIZED' } }) }
 
-  if (!auth.currentUser) { return res.status(401).json({ error: { message: 'UNAUTHORIZED' } }) }
-
   try {
     const token = req.headers.authorization.split('Bearer ')[1]
-    const decoded = jwt.verify(token, env.JWT_SECRET)
-    req.user = decoded
+    const decoded = await admin.auth().verifyIdToken(token)
+    const user = await userModel.findOne({ parentEmail: decoded.email }).lean()
+    if (!user) { return res.status(401).json({ error: { message: 'UNAUTHORIZED' } }) }
+    req.user = user
     next()
   } catch (err) {
-    switch (err.name) {
-      case 'TokenExpiredError':
-        return res.status(401).json({ error: { message: 'TOKEN_EXPIRED' } })
-      case 'JsonWebTokenError':
-        return res.status(401).json({ error: { message: 'INVALID_TOKEN' } })
-      default:
-        return res.status(500).json(err)
-    }
+    const { errorMessage, statusCode } = firebaseAuthErrorCodes(err)
+    return res.status(statusCode).json({ error: { message: errorMessage } })
   }
 }
 
