@@ -1,5 +1,6 @@
 const joiDate = require('@joi/date')
 const joi = require('joi').extend(joiDate)
+const User = require('../models/User')
 
 const registerUserSchema = joi.object({
   firstName: joi.string().max(255).required().messages({
@@ -86,13 +87,46 @@ const updatePasswordSchema = joi.object({
   })
 }).messages({})
 
-const forgotPasswordSchema = joi.object({
+const resetPasswordSchema = joi.object({
+  newPassword: joi.string().max(255).required().messages({
+    'string.base': 'NEW_PASSWORD_MUST_BE_STRING',
+    'any.required': 'NEW_PASSWORD_REQUIRED',
+    'string.max': 'NEW_PASSWORD_MAX_255',
+    'string.empty': 'NEW_PASSWORD_REQUIRED'
+  }),
+  confirmPassword: joi.string().max(255).required().valid(joi.ref('newPassword')).messages({
+    'string.base': 'CONFIRM_PASSWORD_MUST_BE_STRING',
+    'any.required': 'CONFIRM_PASSWORD_REQUIRED',
+    'string.max': 'CONFIRM_PASSWORD_MAX_255',
+    'string.empty': 'CONFIRM_PASSWORD_REQUIRED',
+    'any.only': 'CONFIRM_PASSWORD_NOT_MATCH'
+  }),
+  code: joi.string().required().messages({
+    'string.base': 'CODE_MUST_BE_STRING',
+    'any.required': 'CODE_REQUIRED',
+    'string.empty': 'CODE_REQUIRED'
+  })
+}).messages({
+  'object.unknown': 'UNKNOWN_FIELD_FOUND'
+})
+
+const sendPasswordResetCodeSchema = joi.object({
   email: joi.string().max(255).email().required().messages({
     'string.base': 'EMAIL_MUST_BE_STRING',
     'any.required': 'EMAIL_REQUIRED',
     'string.email': 'EMAIL_INVALID',
     'string.max': 'EMAIL_MAX_255',
     'string.empty': 'EMAIL_REQUIRED'
+  })
+}).messages({
+  'object.unknown': 'UNKNOWN_FIELD_FOUND'
+})
+
+const deleteAccountSchema = joi.object({
+  password: joi.string().required().messages({
+    'string.base': 'PASSWORD_MUST_BE_STRING',
+    'any.required': 'PASSWORD_REQUIRED',
+    'string.empty': 'PASSWORD_REQUIRED'
   })
 }).messages({
   'object.unknown': 'UNKNOWN_FIELD_FOUND'
@@ -108,13 +142,108 @@ const signInWithGoogleSchema = joi.object({
   'object.unknown': 'UNKNOWN_FIELD_FOUND'
 })
 
-const authValidation = {
-  signUp: (data) => registerUserSchema.validate(data),
-  signIn: (data) => loginUserSchema.validate(data),
-  verifyEmail: (data) => verifyEmailSchema.validate(data),
-  updatePassword: (data) => updatePasswordSchema.validate(data),
-  forgotPassword: (data) => forgotPasswordSchema.validate(data),
-  signInWithGoogle: (data) => signInWithGoogleSchema.validate(data)
+const signUp = async (req, res, next) => {
+  const { error } = registerUserSchema.validate(req.body)
+  const { parentEmail } = req.body
+  const user = await User.findOne({ parentEmail })
+
+  if (error) { return res.status(422).json({ error: { message: error.details[0].message } }) }
+  if (user) return res.status(422).json({ error: { message: 'EMAIL_ALREADY_EXISTS' } })
+
+  next()
 }
 
-module.exports = authValidation
+const signIn = (req, res, next) => {
+  const { error } = loginUserSchema.validate(req.body)
+  if (error) {
+    return res.status(422).json({
+      error: {
+        message: error.details[0].message
+      }
+    })
+  }
+  next()
+}
+
+const verifyEmail = (req, res, next) => {
+  const { error } = verifyEmailSchema.validate(req.body)
+  if (error) {
+    return res.status(422).json({
+      error: {
+        message: error.details[0].message
+      }
+    })
+  }
+  next()
+}
+
+const updatePassword = (req, res, next) => {
+  const { error } = updatePasswordSchema.validate(req.body)
+  if (error) {
+    return res.status(422).json({
+      error: {
+        message: error.details[0].message
+      }
+    })
+  }
+  next()
+}
+
+const resetPassword = (req, res, next) => {
+  const { error } = resetPasswordSchema.validate(req.body)
+  if (error) {
+    return res.status(422).json({
+      error: {
+        message: error.details[0].message
+      }
+    })
+  }
+  next()
+}
+
+const sendPasswordResetEmail = (req, res, next) => {
+  const { error } = sendPasswordResetCodeSchema.validate(req.body)
+  if (error) {
+    return res.status(422).json({
+      error: {
+        message: error.details[0].message
+      }
+    })
+  }
+  next()
+}
+
+const deleteAccount = (req, res, next) => {
+  const { error } = deleteAccountSchema.validate(req.body)
+  if (error) {
+    return res.status(422).json({
+      error: {
+        message: error.details[0].message
+      }
+    })
+  }
+  next()
+}
+
+const signInWithGoogle = (req, res, next) => {
+  const { error } = signInWithGoogleSchema.validate(req.body)
+  if (error) {
+    return res.status(422).json({
+      error: {
+        message: error.details[0].message
+      }
+    })
+  }
+  next()
+}
+
+module.exports = {
+  signUp,
+  signIn,
+  verifyEmail,
+  updatePassword,
+  resetPassword,
+  sendPasswordResetEmail,
+  deleteAccount,
+  signInWithGoogle
+}

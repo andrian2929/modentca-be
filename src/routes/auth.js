@@ -1,27 +1,32 @@
 const { Router } = require('express')
-const verifyToken = require('../middleware/auth')
+const authValidation = require('../validation/authValidation')
+const { authenticateLogin, authenticateToken } = require('../middleware/auth')
+require('../config/passport')
+
 const {
   signIn,
-  signOut,
   signUp,
   signInWithGoogle,
   getMe,
   sendEmailVerification,
-  sendPasswordResetEmail,
+  verifyEmail,
+  sendPasswordResetCode,
+  resetPassword,
   changePassword,
   deleteAccount
 } = require('../controllers/authController')
 
 const router = Router()
 
-router.post('/sign-up', signUp)
+router.post('/sign-up', authValidation.signUp, signUp)
 router.post('/sign-in-with-google', signInWithGoogle)
-router.post('/sign-in', signIn)
-router.post('/sign-out', verifyToken, signOut)
-router.post('/send-email-verification', verifyToken, sendEmailVerification)
-router.delete('/delete-account', deleteAccount)
-router.post('/password-reset', sendPasswordResetEmail)
-router.put('/change-password', verifyToken, changePassword)
-router.get('/me', verifyToken, getMe)
+router.post('/sign-in', authValidation.signIn, authenticateLogin, signIn)
+router.post('/send-email-verification', sendEmailVerification)
+router.post('/verify-email/:code', verifyEmail)
+router.delete('/delete-account', authValidation.deleteAccount, authenticateToken, deleteAccount)
+router.post('/send-password-reset', sendPasswordResetCode)
+router.put('/reset-password', resetPassword)
+router.put('/change-password', authValidation.updatePassword, authenticateToken, changePassword)
+router.get('/me', authenticateToken, getMe)
 
 module.exports = router

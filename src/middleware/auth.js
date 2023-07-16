@@ -1,31 +1,31 @@
-const admin = require('../config/firebase/firebase-admin')
-const userModel = require('../models/User')
-const firebaseAuthErrorCodes = require('../utils/firebaseAuthErrorCodes')
+const passport = require('passport')
 
-/**
- * Middleware function to verify the authorization token.
- * @param {Object} req - Express request object.
- * @param {Object} res - Express response object.
- * @param {Object} next - Express next middleware function.
- * @returns {Promise<void>}
- */
-const verifyToken = async (req, res, next) => {
-  if (
-    !req.headers.authorization ||
-    !req.headers.authorization.startsWith('Bearer ')
-  ) { return res.status(401).json({ error: { message: 'UNAUTHORIZED' } }) }
-
-  try {
-    const token = req.headers.authorization.split('Bearer ')[1]
-    const decoded = await admin.auth().verifyIdToken(token)
-    const user = await userModel.findOne({ parentEmail: decoded.email }).lean()
-    if (!user) { return res.status(401).json({ error: { message: 'UNAUTHORIZED' } }) }
+const authenticateLogin = (req, res, next) => {
+  passport.authenticate('local', { session: false }, (err, user, info) => {
+    if (err) return next(err)
+    switch (info?.name) {
+      case 'WRONG_CREDENTIALS':
+        return res.status(401).json({ error: { message: info.name } })
+      case 'NOT_FOUND':
+        return res.status(404).json({ error: { message: info.name } })
+    }
     req.user = user
     next()
-  } catch (err) {
-    const { errorMessage, statusCode } = firebaseAuthErrorCodes(err)
-    return res.status(statusCode).json({ error: { message: errorMessage } })
-  }
+  })(req, res, next)
 }
 
-module.exports = verifyToken
+const authenticateToken = (req, res, next) => {
+  passport.authenticate('jwt', { session: false }, (err, user, info) => {
+    if (err) return next(err)
+    switch (info?.name) {
+      case 'JsonWebTokenError':
+      case 'TokenExpiredError':
+        return res.status(401).json({ error: { message: info.name } })
+    }
+    if (!user) return res.status(401).json({ error: info })
+    req.user = user
+    next()
+  })(req, res, next)
+}
+
+module.exports = { authenticateLogin, authenticateToken }

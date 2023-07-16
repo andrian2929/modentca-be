@@ -1,5 +1,8 @@
 const mongoose = require('mongoose')
+const bcrypt = require('bcrypt')
 const { Schema, model } = mongoose
+
+const SALT_ROUNDS = 10
 
 const provinceSchema = {
   provinceId: { type: String, default: null },
@@ -42,6 +45,7 @@ const UserSchema = new Schema(
     firstName: { type: String, default: null },
     lastName: { type: String, default: null },
     parentEmail: { type: String, unique: true, required: true },
+    password: { type: String, required: true },
     birthDate: { type: Date, default: null },
     image: { type: String, default: null },
     sex: { type: String, enum: ['L', 'P', null], default: null },
@@ -50,6 +54,7 @@ const UserSchema = new Schema(
       enum: ['user', 'health_care', 'email'],
       default: 'user'
     },
+    emailVerifiedAt: { type: Date, default: null },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
     parent: {
@@ -63,6 +68,32 @@ const UserSchema = new Schema(
   },
   { timestamps: true, versionKey: false }
 )
+
+UserSchema.pre('save', async function (next) {
+  const user = this
+  try {
+    if (!user.isModified('password')) return next()
+    const salt = await bcrypt.genSalt(SALT_ROUNDS)
+    const hash = await bcrypt.hash(user.password, salt)
+    user.password = hash
+    next()
+  } catch (err) {
+    next(err)
+  }
+})
+
+UserSchema.pre('findOneAndUpdate', async function (next) {
+  const user = this
+  try {
+    if (!user._update.password) return next()
+    const salt = await bcrypt.genSalt(SALT_ROUNDS)
+    const hash = await bcrypt.hash(user._update.password, salt)
+    user._update.password = hash
+    next()
+  } catch (err) {
+    next(err)
+  }
+})
 
 const User = model('User', UserSchema)
 module.exports = User

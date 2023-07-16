@@ -160,10 +160,16 @@ const updateProfileSchema = joi.object({
   'object.unknown': 'UNKNOWN_FIELD_FOUND'
 })
 
-const profileValidation = {
-  updateProfile: (data) => {
-    return updateProfileSchema.validate(data)
+const updateProfile = (req, res, next) => {
+  const { error } = updateProfileSchema.validate(req.body)
+  if (error) {
+    return res.status(422).json({
+      error: {
+        message: error.details[0].message
+      }
+    })
   }
+  next()
 }
 
-module.exports = profileValidation
+module.exports = { updateProfile }

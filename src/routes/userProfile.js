@@ -3,10 +3,11 @@ const {
   getUserProfile,
   updateUserProfile
 } = require('../controllers/userProfileController')
-const verifyToken = require('../middleware/auth')
+const auth = require('../middleware/auth')
+const profileValidation = require('../validation/profileValidation')
 const router = Router()
 
-router.get('/', verifyToken, getUserProfile)
-router.put('/', verifyToken, updateUserProfile)
+router.get('/', auth.authenticateToken, getUserProfile)
+router.put('/', profileValidation.updateProfile, auth.authenticateToken, updateUserProfile)
 
 module.exports = router

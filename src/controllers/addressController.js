@@ -10,18 +10,34 @@ const options = {
   })
 }
 
+/**
+ * Retrieves a list of provinces from an external API.
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} - The response object containing a list of provinces.
+ *
+*/
 const getProvince = async (req, res) => {
   try {
     const response = await options.request.get(
       'https://sig.bps.go.id/rest-bridging/getwilayah?level=provinsi'
     )
     const provinces = responseFormatter(response)
-    return res.status(200).json({ message: 'OK', data: provinces })
+    return res.status(200)
+      .json({ message: 'OK', data: provinces })
   } catch (err) {
-    return res.status(500).json({ error: err })
+    return res.status(500)
+      .json({ error: err })
   }
 }
 
+/**
+ * Retrieves a list of cities based on the provided province ID from an external API.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} - The response object containing a list of cities.
+ */
 const getCity = async (req, res) => {
   const { provinceId } = req.params
 
@@ -36,6 +52,13 @@ const getCity = async (req, res) => {
   }
 }
 
+/**
+ * Retrieves a list of districts based on the provided city ID from an external API.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} - The response object containing a list of districts.
+ */
 const getDistrict = async (req, res) => {
   const { cityId } = req.params
   try {
@@ -50,6 +73,13 @@ const getDistrict = async (req, res) => {
   }
 }
 
+/**
+ * Retrieves a list of sub-districts based on the provided district ID from an external API.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} - The response object containing a list of sub-districts.
+*/
 const getSubDistrict = async (req, res) => {
   const { districtId } = req.params
   try {
@@ -65,6 +95,12 @@ const getSubDistrict = async (req, res) => {
   }
 }
 
+/**
+ * Formats the response data from the external API to include only the required fields.
+ *
+ * @param {Object} response - The response object from the external API.
+ * @returns {Array} - An array of formatted objects containing ID and name fields.
+ */
 function responseFormatter (response) {
   return response.data.map((item) => {
     return {
