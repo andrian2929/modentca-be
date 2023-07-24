@@ -1,6 +1,9 @@
 const { toLocal, getCurrentTime, checkInTime } = require('../utils/timeUtils')
 const checkinModel = require('../models/Checkin')
+const userModel = require('../models/User')
+const consecutiveCheckinModel = require('../models/ConsecutiveCheckin')
 const pointHistoryModel = require('../models/PointHistory')
+const checkInPointModel = require('../models/CheckinPoint')
 
 /**
  * Check-in user for toothbrushing.
@@ -14,8 +17,8 @@ const checkIn = async (req, res) => {
     const { _id: userId } = req.user
     const { type } = req.body
 
-    const isAvailable = isCheckinTimeAvailable(type)
-    if (!isAvailable) {
+    const isAllowed = isCheckinAllowed(type)
+    if (!isAllowed) {
       return res.status(422).json({
         error: {
           message: 'CHECKIN_TIME_NOT_AVAILABLE'
@@ -47,6 +50,8 @@ const checkIn = async (req, res) => {
       type: 'in'
     })
 
+    await addCheckInPoint(userId)
+
     const checkinAt = toLocal(checkin.checkinAt).toISO()
     const createdAt = toLocal(checkin.createdAt).toISO()
     const updatedAt = toLocal(checkin.updatedAt).toISO()
@@ -61,6 +66,7 @@ const checkIn = async (req, res) => {
       }
     })
   } catch (err) {
+    console.log(err)
     return res.status(500).json({
       error: {
         message: 'INTERNAL_SERVER_ERROR'
@@ -118,7 +124,7 @@ const checkInHistory = async (req, res) => {
 }
 
 /**
- * Get check-in point history for a user within the current month.
+ * Get check-in point history of current user within month
  *
  * @param {Object} req - Express request object.
  * @param {Object} res -
@@ -178,7 +184,7 @@ const checkInPointHistory = async (req, res) => {
 }
 
 /**
- * Get statistic of user check-in.
+ * Get checkin statitic of current user within month
  *
  * @param {Object} req - Express request object.
  * @param {Object} res - Express response object.
@@ -190,14 +196,19 @@ const checkInStatistic = async (req, res) => {
 
   try {
     const totalPoint = await getTotalPoint(userId)
+    const consecutiveCheckin = await getConsecutiveCheckiDay(userId)
+    const checkinPercentage = await getCheckinReport(userId)
 
     return res.status(200).json({
       message: 'OK',
       data: {
-        totalPoint
+        totalPoint,
+        consecutiveCheckin,
+        checkinPercentage
       }
     })
   } catch (err) {
+    console.log(err)
     return res.status(500).json({
       error: {
         message: 'INTERNAL_SERVER_ERROR'
@@ -214,31 +225,14 @@ const checkInStatistic = async (req, res) => {
  */
 const getTotalPoint = async (userId) => {
   try {
-    const total = await pointHistoryModel.aggregate([
-      {
-        $match: {
-          userId
-        }
-      },
-      {
-        $group: {
-          _id: '$userId',
-          totalPoint: { $sum: '$point' }
-        }
-      }
-    ])
+    const checkinPoint = await checkInPointModel.findOne({
+      userId
+    })
 
-    if (total.length === 0) {
-      return 0
-    }
-    if (total[0].totalPoint < 0) {
-      return 0
-    }
+    console.log(checkinPoint)
 
-    if (total[0].totalPoint > 1800) {
-      return 1800
-    }
-    return total[0].totalPoint
+    console.log(checkinPoint)
+    return checkinPoint ? checkinPoint.point : 0
   } catch (err) {
     throw new Error(err)
   }
@@ -270,10 +264,200 @@ const isExistCheckin = async (userId, type) => {
  * @param {string} type - Check-in type ('morning' or 'evening').
  * @returns {boolean} True if the current time is within the check-in time, false otherwise.
  */
-const isCheckinTimeAvailable = (type) => {
+const isCheckinAllowed = (type) => {
   const { start, end } = checkInTime(type)
   const currentTime = Date.now()
   return currentTime >= start && currentTime <= end
 }
 
-module.exports = { checkIn, checkInHistory, checkInPointHistory, checkInStatistic }
+/**
+ * Get consecutive check-in of current user
+ *
+ * @param {string} userId
+ * @returns {number} Consecutive check-in of current user
+ */
+const getConsecutiveCheckiDay = async (userId) => {
+  try {
+    const consecutiveCheckin = await consecutiveCheckinModel.findOne({
+      userId
+    })
+
+    if (!consecutiveCheckin) {
+      return 0
+    }
+    return consecutiveCheckin.day
+  } catch (err) {
+    throw new Error(err)
+  }
+}
+
+/**
+ * Add consecutive check-in of user by 1.
+ *
+ * @param {string} userId
+ */
+const addConsecutiveCheckinDay = async (userId) => {
+  try {
+    const consecutiveCheckin = await consecutiveCheckinModel.findOne({
+      userId
+    })
+
+    if (!consecutiveCheckin) {
+      await consecutiveCheckinModel.create({
+        userId,
+        day: 1
+      })
+    } else {
+      await consecutiveCheckinModel
+        .updateOne({ userId })
+        .set({ day: consecutiveCheckin.consecutive + 1 })
+    }
+  } catch (err) {
+    throw new Error(err)
+  }
+}
+
+const resetConsecutiveCheckinDay = async (userId) => {
+  const consecutiveCheckin = await consecutiveCheckinModel.findOne({
+    userId
+  })
+
+  if (!consecutiveCheckin) {
+    await consecutiveCheckinModel.create({
+      userId,
+      day: 0
+    })
+  } else {
+    await consecutiveCheckinModel.updateOne({ userId }, { day: 0 })
+  }
+}
+
+/**
+ * Add check-in point of user by 5.
+ *
+ * @param {string} userId
+ */
+const addCheckInPoint = async (userId) => {
+  try {
+    const checkinPoint = await checkInPointModel.findOne({
+      userId
+    })
+
+    if (!checkinPoint) {
+      await checkInPointModel.create({
+        userId,
+        point: 5
+      })
+    } else {
+      const checkInPoint = Math.min(Math.max(checkinPoint.point + 5, 0), 1800)
+      await checkInPointModel.updateOne({ userId }, { point: checkInPoint })
+    }
+  } catch (err) {
+    throw new Error(err)
+  }
+}
+
+/**
+ * Reduce check-in point of user by 10.
+ *
+ * @param {string} userId
+ */
+const reduceCheckInPoint = async (userId) => {
+  try {
+    const checkinPoint = await checkInPointModel.findOne({
+      userId
+    })
+
+    if (!checkinPoint) {
+      await checkInPointModel.create({
+        userId,
+        point: 0
+      })
+    } else {
+      const checkInPoint = Math.min(Math.max(checkinPoint.point - 10, 0), 1800)
+      await checkInPointModel.updateOne({ userId }, { point: checkInPoint })
+    }
+  } catch (err) {
+    throw new Error(err)
+  }
+}
+
+/**
+ * Marks users as not checked-in, updating their point history and consecutive check-ins.
+ */
+const markAsNotCheckedIn = async () => {
+  try {
+    const users = await userModel.find()
+    users.forEach(async (user) => {
+      const { _id: userId } = user
+
+      const [morningCheckin, eveningCheckin] = await Promise.all([
+        checkinModel.findOne({
+          userId,
+          type: 'morning',
+          checkinAt: {
+            $gte: checkInTime('morning').start,
+            $lt: checkInTime('morning').end
+          }
+        }),
+        checkinModel.findOne({
+          userId,
+          type: 'evening',
+          checkinAt: {
+            $gte: checkInTime('evening').start,
+            $lt: checkInTime('evening').end
+          }
+        })
+      ])
+
+      if (!morningCheckin) {
+        await reduceCheckInPoint(userId)
+        await pointHistoryModel.create({
+          userId,
+          point: -10,
+          type: 'out'
+        })
+      }
+
+      if (!eveningCheckin) {
+        await reduceCheckInPoint(userId)
+        await pointHistoryModel.create({
+          userId,
+          point: -10,
+          type: 'out'
+        })
+      }
+
+      if (morningCheckin || eveningCheckin) {
+        await addConsecutiveCheckinDay(userId)
+      } else {
+        await resetConsecutiveCheckinDay(userId)
+      }
+    })
+  } catch (err) {
+    throw new Error(err)
+  }
+}
+
+const getCheckinReport = async (userId) => {
+  try {
+    const currentTime = getCurrentTime()
+    const daysInMonth = currentTime.daysInMonth
+    const startOfMonth = currentTime.startOf('month').toJSDate()
+    const endOfMonth = currentTime.endOf('month').toJSDate()
+
+    const checkIn = checkinModel.countDocuments({
+      userId,
+      checkinAt: {
+        $gte: startOfMonth,
+        $lt: endOfMonth
+      },
+      type: {
+        $in: ['morning', 'evening']
+      }
+    })
+    return Math.floor(((await checkIn / 2) / daysInMonth) * 100)
+  } catch (err) { throw new Error(err) }
+}
+
+module.exports = { checkIn, checkInHistory, checkInPointHistory, checkInStatistic, markAsNotCheckedIn }

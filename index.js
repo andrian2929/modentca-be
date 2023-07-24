@@ -8,6 +8,7 @@ const routes = require('./src/routes')
 require('./src/config/firebase/firebase')
 require('./src/config/db')
 require('./src/config/time')
+require('./src/config/cron')
 
 const PORT = process.env.PORT || 3000
 

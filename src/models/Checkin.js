@@ -1,5 +1,12 @@
 const mongoose = require('mongoose')
 const { Schema, model } = mongoose
+// const DateTime = require('../config/time')
+// const morningStart = DateTime.now().set({
+//   hour: 8,
+//   minute: 0,
+//   second: 0,
+//   millisecond: 0
+// })
 
 const CheckinSchema = new Schema(
   {
