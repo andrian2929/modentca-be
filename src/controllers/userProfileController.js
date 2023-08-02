@@ -13,7 +13,6 @@ const getUserProfile = async (req, res) => {
 }
 
 const updateUserProfile = async (req, res) => {
-  console.log(req.user)
   try {
     const updatedUser = await UserModel.findByIdAndUpdate(
       req.user._id, req.body, { new: true }).select('-password')

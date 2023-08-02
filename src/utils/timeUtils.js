@@ -1,7 +1,6 @@
 const DateTime = require('../config/time')
 
 const getCurrentTime = () => {
-  // log days in month
   return DateTime.now()
 }
 
@@ -11,6 +10,10 @@ const toUTC = (time) => {
 
 const toLocal = (time) => {
   return DateTime.fromJSDate(time)
+}
+
+const createDateTime = (config) => {
+  return DateTime.fromObject(config)
 }
 
 const checkInTime = (type) => {
@@ -59,6 +62,7 @@ const checkInTime = (type) => {
 
 module.exports = {
   getCurrentTime,
+  createDateTime,
   toUTC,
   toLocal,
   checkInTime

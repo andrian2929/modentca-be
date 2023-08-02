@@ -8,9 +8,11 @@ const {
   checkIn,
   checkInHistory,
   checkInPointHistory,
-  checkInStatistic
+  checkInStatistic,
+  getCheckInReport
 } = require('../controllers/checkinController')
 
+router.get('/report/:regionType/:regionId/:year/:month', checkInvalidation.getCheckInReport, auth.authenticateToken, getCheckInReport)
 router.post('/', checkInvalidation.checkIn, auth.authenticateToken, checkIn)
 router.get('/history', auth.authenticateToken, checkInHistory)
 router.get('/point-history', auth.authenticateToken, checkInPointHistory)

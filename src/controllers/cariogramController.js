@@ -1,3 +1,10 @@
+/**
+ * @description Check cariogram based on decay, extracted, and filling (deft)
+ * @see https://en.wikipedia.org/wiki/Cariogram
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {Object} - Response object with deft value and deft scale
+ */
 const checkCariogram = async (req, res) => {
   try {
     const { decay, extracted, filling } = req.query

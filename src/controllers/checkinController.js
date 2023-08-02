@@ -1,4 +1,4 @@
-const { toLocal, getCurrentTime, checkInTime } = require('../utils/timeUtils')
+const { toLocal, getCurrentTime, checkInTime, createDateTime } = require('../utils/timeUtils')
 const checkinModel = require('../models/Checkin')
 const userModel = require('../models/User')
 const consecutiveCheckinModel = require('../models/ConsecutiveCheckin')
@@ -6,8 +6,7 @@ const pointHistoryModel = require('../models/PointHistory')
 const checkInPointModel = require('../models/CheckinPoint')
 
 /**
- * Check-in user for toothbrushing.
- *
+ * @description Check-in user for toothbrushing.
  * @param {Object} req - Express request object.
  * @param {Object} res - Express response object.
  * @returns {Object} Response object with check-in data or error message.
@@ -17,8 +16,7 @@ const checkIn = async (req, res) => {
     const { _id: userId } = req.user
     const { type } = req.body
 
-    const isAllowed = isCheckinAllowed(type)
-    if (!isAllowed) {
+    if (!canCheckIn(type)) {
       return res.status(422).json({
         error: {
           message: 'CHECKIN_TIME_NOT_AVAILABLE'
@@ -26,7 +24,7 @@ const checkIn = async (req, res) => {
       })
     }
 
-    const isExist = await isExistCheckin(userId, type)
+    const isExist = await hasCheckinIn(userId, type)
     if (isExist) {
       return res.status(422).json({
         error: {
@@ -66,7 +64,7 @@ const checkIn = async (req, res) => {
       }
     })
   } catch (err) {
-    console.log(err)
+    console.err(err)
     return res.status(500).json({
       error: {
         message: 'INTERNAL_SERVER_ERROR'
@@ -76,8 +74,7 @@ const checkIn = async (req, res) => {
 }
 
 /**
- * Get check-in data for a user within the current month.
- *
+ * @description Get check-in data for a user within the current month.
  * @param {Object} req - Express request object.
  * @param {Object} res - Express response object.
  * @returns {Object} Response object with check-in data or error message.
@@ -124,10 +121,9 @@ const checkInHistory = async (req, res) => {
 }
 
 /**
- * Get check-in point history of current user within month
- *
+ * @description Get check-in point history of current user within month.
  * @param {Object} req - Express request object.
- * @param {Object} res -
+ * @param {Object} res - Express response object.
  * @returns {Object} Response object with check-in point history or error message.
  */
 const checkInPointHistory = async (req, res) => {
@@ -184,8 +180,7 @@ const checkInPointHistory = async (req, res) => {
 }
 
 /**
- * Get checkin statitic of current user within month
- *
+ * @description Get check-in statistic of current user within month.
  * @param {Object} req - Express request object.
  * @param {Object} res - Express response object.
  * @returns {Object} Response object with statistic of user check-in or error message.
@@ -195,20 +190,21 @@ const checkInStatistic = async (req, res) => {
   const { _id: userId } = req.user
 
   try {
+    const { month, year } = getCurrentTime()
     const totalPoint = await getTotalPoint(userId)
-    const consecutiveCheckin = await getConsecutiveCheckiDay(userId)
-    const checkinPercentage = await getCheckinReport(userId)
+    const consecutiveCheckInDay = await getConsecutiveCheckiDay(userId)
+    const checkInPercentage = await checkInReport(userId, year, month)
 
     return res.status(200).json({
       message: 'OK',
       data: {
         totalPoint,
-        consecutiveCheckin,
-        checkinPercentage
+        consecutiveCheckInDay,
+        checkInPercentage
       }
     })
   } catch (err) {
-    console.log(err)
+    console.err(err)
     return res.status(500).json({
       error: {
         message: 'INTERNAL_SERVER_ERROR'
@@ -218,8 +214,7 @@ const checkInStatistic = async (req, res) => {
 }
 
 /**
- * Get total point of user check-in.
- *
+ * @description Get total point of user check-in.
  * @param {string} userId User ID.
  * @returns {number} Total point of user check-in.
  */
@@ -229,9 +224,6 @@ const getTotalPoint = async (userId) => {
       userId
     })
 
-    console.log(checkinPoint)
-
-    console.log(checkinPoint)
     return checkinPoint ? checkinPoint.point : 0
   } catch (err) {
     throw new Error(err)
@@ -239,13 +231,12 @@ const getTotalPoint = async (userId) => {
 }
 
 /**
- * Check if a check-in record already exists for the user and type.
- *
+ * @description Check if a check-in exists for the current user and type.
  * @param {string} userId - User ID.
  * @param {string} type - Check-in type ('morning' or 'evening').
  * @returns {boolean} True if a check-in exists, false otherwise.
  */
-const isExistCheckin = async (userId, type) => {
+const hasCheckinIn = async (userId, type) => {
   const { start, end } = checkInTime(type)
   const checkin = await checkinModel.findOne({
     userId,
@@ -259,21 +250,19 @@ const isExistCheckin = async (userId, type) => {
 }
 
 /**
- * Check if the current time is within the check-in time.
- *
+ * @description Check if the current time is within the check-in time.
  * @param {string} type - Check-in type ('morning' or 'evening').
  * @returns {boolean} True if the current time is within the check-in time, false otherwise.
  */
-const isCheckinAllowed = (type) => {
+const canCheckIn = (type) => {
   const { start, end } = checkInTime(type)
   const currentTime = Date.now()
   return currentTime >= start && currentTime <= end
 }
 
 /**
- * Get consecutive check-in of current user
- *
- * @param {string} userId
+ * @description Get consecutive check-in day of user.
+ * @param {string} userId - User ID.
  * @returns {number} Consecutive check-in of current user
  */
 const getConsecutiveCheckiDay = async (userId) => {
@@ -292,9 +281,9 @@ const getConsecutiveCheckiDay = async (userId) => {
 }
 
 /**
- * Add consecutive check-in of user by 1.
- *
- * @param {string} userId
+ * @description Add consecutive check-in day of user by 1.
+ * @param {string} userId - User ID.
+ * @throws {Error} Error message.
  */
 const addConsecutiveCheckinDay = async (userId) => {
   try {
@@ -317,27 +306,36 @@ const addConsecutiveCheckinDay = async (userId) => {
   }
 }
 
+/**
+ * @description Reset consecutive check-in day of user to 0.
+ * @param {string} userId - User ID.
+ * @throws {Error} Error message.
+ */
 const resetConsecutiveCheckinDay = async (userId) => {
-  const consecutiveCheckin = await consecutiveCheckinModel.findOne({
-    userId
-  })
-
-  if (!consecutiveCheckin) {
-    await consecutiveCheckinModel.create({
-      userId,
-      day: 0
+  try {
+    const consecutiveCheckin = await consecutiveCheckinModel.findOne({
+      userId
     })
-  } else {
-    await consecutiveCheckinModel.updateOne({ userId }, { day: 0 })
+
+    if (!consecutiveCheckin) {
+      await consecutiveCheckinModel.create({
+        userId,
+        day: 0
+      })
+    } else {
+      await consecutiveCheckinModel.updateOne({ userId }, { day: 0 })
+    }
+  } catch (err) {
+    throw new Error(err)
   }
 }
 
 /**
- * Add check-in point of user by 5.
- *
- * @param {string} userId
+ * @description Add check-in point of user by 5.
+ * @param {string} userId - User ID.
+ * @param {number} point - Point to add.
  */
-const addCheckInPoint = async (userId) => {
+const addCheckInPoint = async (userId, point = 5) => {
   try {
     const checkinPoint = await checkInPointModel.findOne({
       userId
@@ -349,7 +347,7 @@ const addCheckInPoint = async (userId) => {
         point: 5
       })
     } else {
-      const checkInPoint = Math.min(Math.max(checkinPoint.point + 5, 0), 1800)
+      const checkInPoint = Math.min(Math.max(checkinPoint.point + point, 0), 1800)
       await checkInPointModel.updateOne({ userId }, { point: checkInPoint })
     }
   } catch (err) {
@@ -358,11 +356,12 @@ const addCheckInPoint = async (userId) => {
 }
 
 /**
- * Reduce check-in point of user by 10.
- *
- * @param {string} userId
+ * @description Reduce check-in point of user by 10.
+ * @param {string} userId - User ID.
+ * @param {number} point - Point to reduce.
+ * @throws {Error} Error message.
  */
-const reduceCheckInPoint = async (userId) => {
+const reduceCheckInPoint = async (userId, point = 10) => {
   try {
     const checkinPoint = await checkInPointModel.findOne({
       userId
@@ -374,7 +373,7 @@ const reduceCheckInPoint = async (userId) => {
         point: 0
       })
     } else {
-      const checkInPoint = Math.min(Math.max(checkinPoint.point - 10, 0), 1800)
+      const checkInPoint = Math.min(Math.max(checkinPoint.point - point, 0), 1800)
       await checkInPointModel.updateOne({ userId }, { point: checkInPoint })
     }
   } catch (err) {
@@ -383,7 +382,8 @@ const reduceCheckInPoint = async (userId) => {
 }
 
 /**
- * Marks users as not checked-in, updating their point history and consecutive check-ins.
+ * @description Marks users as not checked-in, updating their point history and consecutive check-in
+ * @throws {Error} Error message.
  */
 const markAsNotCheckedIn = async () => {
   try {
@@ -439,14 +439,25 @@ const markAsNotCheckedIn = async () => {
   }
 }
 
-const getCheckinReport = async (userId) => {
+/**
+ * @description Get check-in report of user within the certain month.
+ * @param {string} userId - User ID.
+ * @param {number} $year - Year.
+ * @param {number} $month - Month.
+ * @returns {number} Check-in percentage of user.
+ * @throws {Error} Error message.
+ */
+const checkInReport = async (userId, year, month) => {
   try {
-    const currentTime = getCurrentTime()
-    const daysInMonth = currentTime.daysInMonth
-    const startOfMonth = currentTime.startOf('month').toJSDate()
-    const endOfMonth = currentTime.endOf('month').toJSDate()
+    const dateTime = createDateTime({ year, month })
 
-    const checkIn = checkinModel.countDocuments({
+    console.log(dateTime.toISODate())
+
+    const daysInMonth = dateTime.daysInMonth
+    const startOfMonth = dateTime.startOf('month').toJSDate()
+    const endOfMonth = dateTime.endOf('month').toJSDate()
+
+    const checkInCount = checkinModel.countDocuments({
       userId,
       checkinAt: {
         $gte: startOfMonth,
@@ -456,8 +467,65 @@ const getCheckinReport = async (userId) => {
         $in: ['morning', 'evening']
       }
     })
-    return Math.floor(((await checkIn / 2) / daysInMonth) * 100)
+    return Math.floor(((await checkInCount) / 2 / daysInMonth) * 100)
   } catch (err) { throw new Error(err) }
 }
 
-module.exports = { checkIn, checkInHistory, checkInPointHistory, checkInStatistic, markAsNotCheckedIn }
+const getCheckInReport = async (req, res) => {
+  try {
+    const { regionType, regionId, month, year } = req.params
+
+    const regionField = {
+      province: 'address.province.provinceId',
+      city: 'address.city.cityId',
+      district: 'address.district.districtId',
+      subdistrict: 'address.subDistrict.subDistrictId'
+    }
+
+    const users = await userModel
+      .find({
+        [regionField[regionType]]: regionId
+      })
+      .lean()
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        error: {
+          message: 'NOT_FOUND'
+        }
+      })
+    }
+
+    let sumofCheckInPercentage = 0
+    for (const user of users) {
+      const checkInPercentage = await checkInReport(user._id, year, month)
+      sumofCheckInPercentage += checkInPercentage
+    }
+
+    const averageCheckInPercentage = sumofCheckInPercentage / users.length
+
+    return res.status(200).json({
+      message: 'OK',
+      data: {
+        averageCheckInPercentage
+      }
+    })
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({
+      error: {
+        message: 'INTERNAL_SERVER_ERROR'
+      }
+    })
+  }
+}
+module.exports = {
+  checkIn,
+  checkInHistory,
+  checkInPointHistory,
+  checkInStatistic,
+  markAsNotCheckedIn,
+  getTotalPoint,
+  reduceCheckInPoint,
+  getCheckInReport
+}
