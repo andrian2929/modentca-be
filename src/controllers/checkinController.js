@@ -299,9 +299,10 @@ const addConsecutiveCheckinDay = async (userId) => {
     } else {
       await consecutiveCheckinModel
         .updateOne({ userId })
-        .set({ day: consecutiveCheckin.consecutive + 1 })
+        .set({ day: consecutiveCheckin.day + 1 })
     }
   } catch (err) {
+    console.error(err)
     throw new Error(err)
   }
 }
