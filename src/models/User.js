@@ -28,8 +28,7 @@ const addressSchema = new Schema({
   province: { type: provinceSchema, required: true },
   city: { type: citySchema, required: true },
   district: { type: districtSchema, required: true },
-  subDistrict: { type: subDistrictSchema, required: true },
-  detail: { type: String, required: true }
+  subDistrict: { type: subDistrictSchema, required: true }
 })
 
 const ParentSchema = new Schema({
@@ -47,7 +46,7 @@ const UserSchema = new Schema(
     parentEmail: { type: String, unique: true, required: true },
     password: { type: String, required: true },
     birthDate: { type: Date, default: null },
-    image: { type: String, default: null },
+    image: { type: Schema.Types.Mixed, default: null },
     sex: { type: String, enum: ['L', 'P', null], default: null },
     role: {
       type: String,

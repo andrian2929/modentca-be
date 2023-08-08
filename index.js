@@ -1,10 +1,11 @@
 const express = require('express')
 const http = require('http')
-const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const compression = require('compression')
 const cors = require('cors')
+const path = require('path')
 const routes = require('./src/routes')
+
 require('./src/config/firebase/firebase')
 require('./src/config/db')
 require('./src/config/time')
@@ -13,10 +14,13 @@ require('./src/config/cron')
 const PORT = process.env.PORT || 3000
 
 const app = express()
+
 app.use(cors({ credentials: true }))
 app.use(compression())
 app.use(cookieParser())
-app.use(bodyParser.json())
+app.use('/public', express.static(path.join(__dirname, 'public')))
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 app.use(routes)
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {

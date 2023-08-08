@@ -1,13 +1,12 @@
 const { Router } = require('express')
-const {
-  getUserProfile,
-  updateUserProfile
-} = require('../controllers/userProfileController')
+const userProfileController = require('../controllers/userProfileController')
+const uploadProfilePicture = require('../middleware/upload/profilePicture')
 const auth = require('../middleware/auth')
 const profileValidation = require('../validation/profileValidation')
 const router = Router()
 
-router.get('/', auth.authenticateToken, getUserProfile)
-router.put('/', profileValidation.updateProfile, auth.authenticateToken, updateUserProfile)
+router.put('/photo', auth.authenticateToken, uploadProfilePicture, userProfileController.uploadProfilePhoto)
+router.get('/', auth.authenticateToken, userProfileController.getUserProfile)
+router.put('/', profileValidation.updateProfile, auth.authenticateToken, userProfileController.updateUserProfile)
 
 module.exports = router
