@@ -73,8 +73,7 @@ UserSchema.pre('save', async function (next) {
   try {
     if (!user.isModified('password')) return next()
     const salt = await bcrypt.genSalt(SALT_ROUNDS)
-    const hash = await bcrypt.hash(user.password, salt)
-    user.password = hash
+    user.password = await bcrypt.hash(user.password, salt)
     next()
   } catch (err) {
     next(err)
@@ -83,11 +82,13 @@ UserSchema.pre('save', async function (next) {
 
 UserSchema.pre('findOneAndUpdate', async function (next) {
   const user = this
+
   try {
+    // noinspection JSUnresolvedVariable
     if (!user._update.password) return next()
     const salt = await bcrypt.genSalt(SALT_ROUNDS)
-    const hash = await bcrypt.hash(user._update.password, salt)
-    user._update.password = hash
+    // noinspection JSUnresolvedVariable
+    user._update.password = await bcrypt.hash(user._update.password, salt)
     next()
   } catch (err) {
     next(err)
