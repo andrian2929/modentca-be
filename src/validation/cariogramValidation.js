@@ -1,30 +1,41 @@
 const joiDate = require('@joi/date')
 const joi = require('joi').extend(joiDate)
 
-const cariogramSchema = joi
+const checkCariogramSchema = joi
   .object({
-    decay: joi.number().required().messages({
-      'number.base': 'DECAY_MUST_BE_NUMBER',
-      'number.empty': 'DECAY_REQUIRED',
-      'any.required': 'DECAY_REQUIRED'
+    decayed: joi.number().required().messages({
+      'number.base': 'DECAYED_MUST_BE_NUMBER',
+      'number.empty': 'DECAYED_REQUIRED',
+      'any.required': 'DECAYED_REQUIRED'
     }),
     extracted: joi.number().required().messages({
       'number.base': 'EXTRACTED_MUST_BE_NUMBER',
       'number.empty': 'EXTRACTED_REQUIRED',
       'any.required': 'EXTRACTED_REQUIRED'
     }),
-    filling: joi.number().required().messages({
-      'number.base': 'FILLING_MUST_BE_NUMBER',
-      'number.empty': 'FILLING_REQUIRED',
-      'any.required': 'FILLING_REQUIRED'
+    filled: joi.number().required().messages({
+      'number.base': 'FILLED_MUST_BE_NUMBER',
+      'number.empty': 'FILLED_REQUIRED',
+      'any.required': 'FILLED_REQUIRED'
     })
       .messages({
         'object.unknown': 'UNKNOWN_FIELD_FOUND'
       })
   })
 
-const cariogram = (req, res, next) => {
-  const { error } = cariogramSchema.validate(req.query)
+const getCariogramHistorySchema = joi.object({
+  startDate: joi.date().optional().format('YYYY-MM-DD').messages({
+    'date.format': 'START_DATE_INVALID_FORMAT'
+  }),
+  endDate: joi.date().optional().format('YYYY-MM-DD').messages({
+    'date.format': 'END_DATE_INVALID_FORMAT'
+  })
+}).messages({
+  'object.unknown': 'UNKNOWN_FIELD_FOUND'
+})
+
+const checkCariogram = (req, res, next) => {
+  const { error } = checkCariogramSchema.validate(req.query)
   if (error) {
     return res.status(422).json({
       error: {
@@ -35,4 +46,16 @@ const cariogram = (req, res, next) => {
   next()
 }
 
-module.exports = { cariogram }
+const getCariogramHistory = (req, res, next) => {
+  const { error } = getCariogramHistorySchema.validate(req.query)
+  if (error) {
+    return res.status(422).json({
+      error: {
+        message: error.details[0].message
+      }
+    })
+  }
+  next()
+}
+
+module.exports = { checkCariogram, getCariogramHistory }

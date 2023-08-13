@@ -76,7 +76,7 @@ const updateProfileSchema = joi.object({
         'string.pattern.base': 'PHONE_NUMBER_INVALID',
         'string.empty': 'PHONE_NUMBER_REQUIRED'
       }),
-    relation: joi.string().valid('ayah', 'ibu').required().messages({
+    relation: joi.string().optional().valid('ayah', 'ibu').messages({
       'string.base': 'RELATION_MUST_BE_STRING',
       'any.only': 'RELATION_MUST_BE_AYAH_OR_IBU',
       'any.required': 'RELATION_REQUIRED',

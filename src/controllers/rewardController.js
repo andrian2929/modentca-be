@@ -7,7 +7,7 @@ const redemptionHistoryModel = require('../models/RedemptionHistory')
  * Retrieve all rewards.
  *
  * @param {Object} req - Express request object.
- * @param {Object} req - Express response object.
+ * @param {Object} res - Express response object.
  * @returns {Object} - The response containing the rewards data or an error message.
  */
 const getReward = async (req, res) => {
@@ -42,7 +42,7 @@ const getReward = async (req, res) => {
  * Create a new reward.
  *
  * @param {Object} req - Express request object.
- * @param {Object} req - Express response object.
+ * @param {Object} res - Express response object.
  * @returns {Object} - The response containing the newly created reward data or an error message.
  */
 const storeReward = async (req, res) => {
@@ -75,8 +75,8 @@ const storeReward = async (req, res) => {
 /**
  * @description Update specified reward.
  * @param {Object} req - Express request object.
- * @param {Object} req - Express response object.
- * @returns {Object} - The response containing the updated reward data or an error message.
+ * @param {Object} res - Express response object.
+ * @returns {Object}  - The response containing the updated reward data or an error message.
  */
 const updateReward = async (req, res) => {
   try {
@@ -113,7 +113,7 @@ const updateReward = async (req, res) => {
 /**
  * @description Delete specified reward.
  * @param {Object} req - Express request object.
- * @param {Object} req - Express response object.
+ * @param {Object} res - Express response object.
  */
 const deleteReward = async (req, res) => {
   try {
