@@ -3,7 +3,6 @@ const http = require('http')
 const cookieParser = require('cookie-parser')
 const compression = require('compression')
 const cors = require('cors')
-const path = require('path')
 const routes = require('./src/routes')
 
 require('./src/config/firebase/firebase')

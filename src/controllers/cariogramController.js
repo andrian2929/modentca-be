@@ -1,5 +1,5 @@
 const cariogramHistoryModel = require('../models/CariogramHistory')
-const { toUTC, createDateTime } = require('../utils/timeUtils')
+const { createDateTime } = require('../utils/timeUtils')
 
 /**
  * @description Get cariogram histories of the current authenticated user

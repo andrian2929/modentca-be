@@ -141,7 +141,7 @@ const deleteReward = async (req, res) => {
 /**
  * @description Show specified reward.
  * @param {Object} req - Express request object.
- * @param {Object} req - Express response object.
+ * @param {Object} res - Express response object.
  * @returns {Object} - The response containing the specified reward data or an error message.
  */
 const showReward = async (req, res) => {
@@ -173,7 +173,7 @@ const showReward = async (req, res) => {
 /**
  * @description Redeem specified reward
  * @param {Object} req - Express request object
- * @param {Object} req - Express response object
+ * @param {Object} res - Express response object
  * @returns {Object} - The response containing
  *
  *
