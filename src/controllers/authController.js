@@ -206,7 +206,7 @@ const changePassword = async (req, res) => {
 }
 
 const signInWithGoogle = async (req, res) => {
-
+  return res.status(503).json({ message: 'UNDER_DEVELOPMENT' })
 }
 
 module.exports = {
