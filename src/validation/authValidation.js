@@ -14,12 +14,17 @@ const registerUserSchema = joi.object({
     'string.max': 'LAST_NAME_MAX_255',
     'string.empty': 'LAST_NAME_REQUIRED'
   }),
-  parentEmail: joi.string().max(255).email().required().messages({
-    'string.base': 'PARENT_EMAIL_MUST_BE_STRING',
-    'any.required': 'PARENT_EMAIL_REQUIRED',
-    'string.email': 'PARENT_EMAIL_INVALID',
-    'string.max': 'PARENT_EMAIL_MAX_255',
-    'string.empty': 'PARENT_EMAIL_REQUIRED'
+  username: joi.string().required().max(32).messages({
+    'any.required': 'USERNAME_REQUIRED',
+    'string.base': 'USERNAME_MUST_BE_STRING',
+    'string.max': 'USERNAME_MAX_32',
+    'string.empty': 'USERNAME_REQUIRED'
+  }),
+  parentEmail: joi.string().optional().email().max(255).messages({
+    'string.base': 'EMAIL_MUST_BE_STRING',
+    'string.email': 'EMAIL_INVALID',
+    'string.max': 'EMAIL_MAX_255',
+    'string.empty': 'EMAIL_REQUIRED'
   }),
   password: joi.string().min(8).max(255).required().messages({
     'string.base': 'PASSWORD_MUST_BE_STRING',
@@ -45,12 +50,10 @@ const registerUserSchema = joi.object({
 })
 
 const loginUserSchema = joi.object({
-  email: joi.string().max(255).email().required().messages({
-    'string.base': 'EMAIL_MUST_BE_STRING',
-    'any.required': 'EMAIL_REQUIRED',
-    'string.email': 'EMAIL_INVALID',
-    'string.max': 'EMAIL_MAX_255',
-    'string.empty': 'EMAIL_REQUIRED'
+  username: joi.string().required().max(32).messages({
+    'any.required': 'USERNAME_REQUIRED',
+    'string.base': 'USERNAME_MUST_BE_STRING',
+    'string.max': 'USERNAME_MAX_32'
   }),
   password: joi.string().required().messages({
     'string.base': 'PASSWORD_MUST_BE_STRING',
@@ -144,11 +147,21 @@ const signInWithGoogleSchema = joi.object({
 
 const signUp = async (req, res, next) => {
   const { error } = registerUserSchema.validate(req.body)
-  const { parentEmail } = req.body
-  const user = await User.findOne({ parentEmail })
+  const { parentEmail, username } = req.body
+
+  const user = await User.findOne({
+    $or: [
+      {
+        parentEmail
+      },
+      {
+        username
+      }
+    ]
+  })
 
   if (error) { return res.status(422).json({ error: { message: error.details[0].message } }) }
-  if (user) return res.status(422).json({ error: { message: 'EMAIL_ALREADY_EXISTS' } })
+  if (user) return res.status(422).json({ error: { message: 'EMAIL_OR_USERNAME_ALREADY_EXIST' } })
 
   next()
 }

@@ -1,5 +1,6 @@
 const joiDate = require('@joi/date')
 const joi = require('joi').extend(joiDate)
+const UserModel = require('../models/User')
 
 const updateProfileSchema = joi.object({
   firstName: joi.string()
@@ -18,6 +19,16 @@ const updateProfileSchema = joi.object({
       'string.max': 'LAST_NAME_MAX_255',
       'string.empty': 'LAST_NAME_REQUIRED'
     }),
+  username: joi.string().optional().max(32).messages({
+    'string.base': 'USERNAME_MUST_BE_STRING',
+    'string.max': 'USERNAME_MAX_32',
+    'string.empty': 'USERNAME_REQUIRED'
+  }),
+  parentEmail: joi.string().optional().email().messages({
+    'string.base': 'PARENT_EMAIL_MUST_BE_STRING',
+    'string.email': 'PARENT_EMAIL_INVALID',
+    'string.empty': 'PARENT_EMAIL_REQUIRED'
+  }),
   birthDate: joi.date()
     .format('YYYY-MM-DD')
     .optional()
@@ -160,16 +171,44 @@ const updateProfileSchema = joi.object({
   'object.unknown': 'UNKNOWN_FIELD_FOUND'
 })
 
-const updateProfile = (req, res, next) => {
-  const { error } = updateProfileSchema.validate(req.body)
-  if (error) {
-    return res.status(422).json({
-      error: {
-        message: error.details[0].message
+const updateProfile = async (req, res, next) => {
+  try {
+    const { error } = updateProfileSchema.validate(req.body)
+    const { _id } = req.user
+    const { username, parentEmail } = req.body
+    if (error) {
+      return res.status(422).json({
+        error: {
+          message: error.details[0].message
+        }
+      })
+    }
+
+    if (username) {
+      const usernameExists = await UserModel.findOne({ username, _id: { $ne: _id } })
+      if (usernameExists) {
+        return res.status(422).json({
+          error: {
+            message: 'USERNAME_IS_ALREADY_TAKEN'
+          }
+        })
       }
-    })
+    }
+
+    if (parentEmail) {
+      const parentEmailExists = await UserModel.findOne({ parentEmail, _id: { $ne: _id } })
+      if (parentEmailExists) {
+        return res.status(422).json({
+          error: {
+            message: 'PARENT_EMAIL_IS_ALREADY_TAKEN'
+          }
+        })
+      }
+    }
+    next()
+  } catch (err) {
+    next(err)
   }
-  next()
 }
 
 module.exports = { updateProfile }

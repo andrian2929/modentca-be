@@ -60,6 +60,7 @@ const handleUpload = (req, res, next) => async (err) => {
     req.uploadResult = await handleCloudinaryUpload(datauri)
     next()
   } catch (err) {
+    console.error(err)
     return res.status(500)
       .json({
         error: { message: err.message || 'Something went wrong' }
@@ -84,6 +85,7 @@ const handleError = (err, res) => {
         }
       })
   } else {
+    console.error(err)
     return res
       .status(500)
       .json({

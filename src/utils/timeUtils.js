@@ -1,4 +1,7 @@
-const DateTime = require('../config/time')
+const {
+  DateTime,
+  Interval
+} = require('../config/time')
 
 const getCurrentTime = () => {
   return DateTime.now()
@@ -60,10 +63,15 @@ const checkInTime = (type) => {
   }
 }
 
+const getInterval = (start, end) => {
+  return Interval.fromDateTimes(start, end)
+}
+
 module.exports = {
   getCurrentTime,
   createDateTime,
   toUTC,
   toLocal,
-  checkInTime
+  checkInTime,
+  getInterval
 }

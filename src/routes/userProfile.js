@@ -7,6 +7,6 @@ const router = Router()
 
 router.put('/photo', auth.authenticateToken, uploadProfilePicture, userProfileController.uploadProfilePhoto)
 router.get('/', auth.authenticateToken, userProfileController.getUserProfile)
-router.put('/', profileValidation.updateProfile, auth.authenticateToken, userProfileController.updateUserProfile)
+router.put('/', auth.authenticateToken, profileValidation.updateProfile, userProfileController.updateUserProfile)
 
 module.exports = router

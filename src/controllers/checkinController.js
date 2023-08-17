@@ -1,4 +1,4 @@
-const { toLocal, getCurrentTime, checkInTime, createDateTime } = require('../utils/timeUtils')
+const { toLocal, getCurrentTime, checkInTime, createDateTime, getInterval } = require('../utils/timeUtils')
 const checkinModel = require('../models/Checkin')
 const userModel = require('../models/User')
 const consecutiveCheckinModel = require('../models/ConsecutiveCheckin')
@@ -64,7 +64,7 @@ const checkIn = async (req, res) => {
       }
     })
   } catch (err) {
-    console.err(err)
+    console.error(err)
     return res.status(500).json({
       error: {
         message: 'INTERNAL_SERVER_ERROR'
@@ -94,6 +94,14 @@ const checkInHistory = async (req, res) => {
         $lt: endOfMonth
       }
     }).sort({ checkinAt: 'asc' })
+
+    if (checkIn.length === 0) {
+      return res.status(404).json({
+        error: {
+          message: 'NOT_FOUND'
+        }
+      })
+    }
 
     const checkInData = checkIn.map((item) => {
       const checkinAt = toLocal(item.checkinAt).toISO()
@@ -141,7 +149,7 @@ const checkInPointHistory = async (req, res) => {
     }
   }).sort({ createdAt: 'asc' })
 
-  if (!checkinPoint) {
+  if (checkinPoint.length === 0) {
     return res.status(404).json({
       error: {
         message: 'NOT_FOUND'
@@ -205,6 +213,49 @@ const checkInStatistic = async (req, res) => {
     })
   } catch (err) {
     console.err(err)
+    return res.status(500).json({
+      error: {
+        message: 'INTERNAL_SERVER_ERROR'
+      }
+    })
+  }
+}
+
+/**
+ * @description Get check-in status e.g. true or false of current user within month.
+ * @param req - Express request object.
+ * @param res - Express response object.
+ * @returns {Promise<*>}
+ */
+const getCheckInStatus = async (req, res) => {
+  try {
+    const { _id: userId } = req.user
+    const { date } = req.query
+    const currentTime = getCurrentTime()
+    if (date) {
+      const checkInStatus = await getCheckInStatusByDate(userId, date)
+      return res.status(200).json({
+        message: 'OK',
+        data: checkInStatus
+      })
+    }
+
+    const firstDayOfMonth = currentTime.startOf('month')
+    const lastDayOfMonth = currentTime.endOf('month')
+    const monthInterval = getInterval(firstDayOfMonth, lastDayOfMonth)
+    const dailyIntervals = monthInterval.splitBy({ days: 1 }).map((d) => d.start)
+
+    const checkInStatus = []
+    for (const day of dailyIntervals) {
+      const checkIn = await getCheckInStatusByDate(userId, day.toFormat('yyyy-MM-dd'))
+      checkInStatus.push(checkIn)
+    }
+    return res.status(200).json({
+      message: 'OK',
+      data: checkInStatus
+    })
+  } catch (err) {
+    console.error(err)
     return res.status(500).json({
       error: {
         message: 'INTERNAL_SERVER_ERROR'
@@ -443,16 +494,14 @@ const markAsNotCheckedIn = async () => {
 /**
  * @description Get check-in report of user within the certain month.
  * @param {string} userId - User ID.
- * @param {number} $year - Year.
- * @param {number} $month - Month.
+ * @param {number} year - Year.
+ * @param {number} month - Month.
  * @returns {number} Check-in percentage of user.
  * @throws {Error} Error message.
  */
 const checkInReport = async (userId, year, month) => {
   try {
     const dateTime = createDateTime({ year, month })
-
-    console.log(dateTime.toISODate())
 
     const daysInMonth = dateTime.daysInMonth
     const startOfMonth = dateTime.startOf('month').toJSDate()
@@ -472,6 +521,12 @@ const checkInReport = async (userId, year, month) => {
   } catch (err) { throw new Error(err) }
 }
 
+/**
+ * @description Get check-in report by region within the certain month.
+ * @param req - Express request object.
+ * @param res - Express response object.
+ * @returns {Promise<*>}
+ */
 const getCheckInReport = async (req, res) => {
   try {
     const { regionType, regionId, month, year } = req.params
@@ -497,13 +552,13 @@ const getCheckInReport = async (req, res) => {
       })
     }
 
-    let sumofCheckInPercentage = 0
+    let sumOfPercentage = 0
     for (const user of users) {
       const checkInPercentage = await checkInReport(user._id, year, month)
-      sumofCheckInPercentage += checkInPercentage
+      sumOfPercentage += checkInPercentage
     }
 
-    const averageCheckInPercentage = sumofCheckInPercentage / users.length
+    const averageCheckInPercentage = sumOfPercentage / users.length
 
     return res.status(200).json({
       message: 'OK',
@@ -520,6 +575,34 @@ const getCheckInReport = async (req, res) => {
     })
   }
 }
+const getCheckInStatusByDate = async (userId, date) => {
+  try {
+    const [year, month, day] = date.split('-')
+    const startOfDay = createDateTime({ year, month, day }).startOf('day').toJSDate()
+    const endOfDay = createDateTime({ year, month, day }).endOf('day').toJSDate()
+
+    const morningCheckin = await checkinModel.findOne({
+      userId,
+      checkinAt: { $gte: startOfDay, $lt: endOfDay },
+      type: 'morning'
+    })
+
+    const eveningCheckin = await checkinModel.findOne({
+      userId,
+      checkinAt: { $gte: startOfDay, $lt: endOfDay },
+      type: 'evening'
+    })
+
+    return {
+      morning: !!morningCheckin,
+      evening: !!eveningCheckin,
+      date
+    }
+  } catch (err) {
+    throw new Error(err)
+  }
+}
+
 module.exports = {
   checkIn,
   checkInHistory,
@@ -528,5 +611,6 @@ module.exports = {
   markAsNotCheckedIn,
   getTotalPoint,
   reduceCheckInPoint,
-  getCheckInReport
+  getCheckInReport,
+  getCheckInStatus
 }

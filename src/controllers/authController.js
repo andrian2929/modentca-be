@@ -7,7 +7,6 @@ const {
   sendEmailVerification: sendEmailVerificationUtil,
   sendPasswordResetCode: sendPasswordResetCodeUtil
 } = require('../utils/emailUtils')
-const User = require('../models/User')
 
 /**
  * Sign up new user
@@ -17,15 +16,16 @@ const User = require('../models/User')
  * @returns {Object} - The response containing the created user data or an error message.
  */
 const signUp = async (req, res) => {
-  const { parentEmail: email, password } = req.body
+  const { username, password } = req.body
   try {
     const newUser = new UserModel({
-      parentEmail: email,
+      username,
       password
     })
 
     await newUser.save()
-    const user = await UserModel.findOne({ parentEmail: email }).select('-password').lean()
+
+    const user = await UserModel.findOne({ username }).select('-password').lean()
 
     res.status(201).json({ message: 'CREATED', data: user })
   } catch (err) {
@@ -166,13 +166,13 @@ const deleteAccount = async (req, res) => {
     const { _id } = req.user
     const { password } = req.body
 
-    const user = await User.findOne({ _id })
+    const user = await UserModel.findOne({ _id })
     if (!user) return res.status(404).json({ error: { message: 'NOT_FOUND' } })
 
     const isMatch = await bcrypt.compare(password, user.password)
     if (!isMatch) return res.status(400).json({ error: { message: 'PASSWORD_NOT_MATCH' } })
 
-    await User.findByIdAndDelete(_id)
+    await UserModel.findByIdAndDelete(_id)
     return res.status(200).json({ message: 'OK' })
   } catch (err) {
     return res.status(500).json({ error: { message: 'INTERNAL_SERVER_ERROR' } })
@@ -191,7 +191,7 @@ const changePassword = async (req, res) => {
     const { _id } = req.user
     const { currentPassword, newPassword } = req.body
 
-    const user = await User.findById(_id)
+    const user = await UserModel.findById(_id)
     if (!user) return res.status(404).json({ error: { message: 'NOT_FOUND' } })
 
     const isMatch = await bcrypt.compare(currentPassword, user.password)

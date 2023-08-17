@@ -43,7 +43,8 @@ const UserSchema = new Schema(
   {
     firstName: { type: String, default: null },
     lastName: { type: String, default: null },
-    parentEmail: { type: String, unique: true, required: true },
+    username: { type: String, unique: true, default: null },
+    parentEmail: { type: String, unique: true, default: null },
     password: { type: String, required: true },
     birthDate: { type: Date, default: null },
     image: { type: Schema.Types.Mixed, default: null },
@@ -82,7 +83,6 @@ UserSchema.pre('save', async function (next) {
 
 UserSchema.pre('findOneAndUpdate', async function (next) {
   const user = this
-
   try {
     // noinspection JSUnresolvedVariable
     if (!user._update.password) return next()
@@ -96,4 +96,5 @@ UserSchema.pre('findOneAndUpdate', async function (next) {
 })
 
 const User = model('User', UserSchema)
+
 module.exports = User

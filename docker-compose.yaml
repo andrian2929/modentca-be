@@ -2,8 +2,8 @@ version: "3"
 
 services:
   app:
-    image: modentca-be-app:latest
-    container_name: modentca-be-app
+    build: ./docker
+    container_name: modentca-be-app-2
     tty: true
     stdin_open: true
     ports:
