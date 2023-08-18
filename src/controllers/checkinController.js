@@ -6,7 +6,7 @@ const pointHistoryModel = require('../models/PointHistory')
 const checkInPointModel = require('../models/CheckinPoint')
 
 /**
- * @description Check-in user for toothbrushing.
+ * @description Check-in user for tooth brushing.
  * @param {Object} req - Express request object.
  * @param {Object} res - Express response object.
  * @returns {Object} Response object with check-in data or error message.
@@ -200,7 +200,7 @@ const checkInStatistic = async (req, res) => {
   try {
     const { month, year } = getCurrentTime()
     const totalPoint = await getTotalPoint(userId)
-    const consecutiveCheckInDay = await getConsecutiveCheckiDay(userId)
+    const consecutiveCheckInDay = await getConsecutiveCheckInDay(userId)
     const checkInPercentage = await checkInReport(userId, year, month)
 
     return res.status(200).json({
@@ -212,7 +212,7 @@ const checkInStatistic = async (req, res) => {
       }
     })
   } catch (err) {
-    console.err(err)
+    console.error(err)
     return res.status(500).json({
       error: {
         message: 'INTERNAL_SERVER_ERROR'
@@ -244,12 +244,8 @@ const getCheckInStatus = async (req, res) => {
     const lastDayOfMonth = currentTime.endOf('month')
     const monthInterval = getInterval(firstDayOfMonth, lastDayOfMonth)
     const dailyIntervals = monthInterval.splitBy({ days: 1 }).map((d) => d.start)
+    const checkInStatus = await Promise.all(dailyIntervals.map((day) => getCheckInStatusByDate(userId, day.toFormat('yyyy-MM-dd'))))
 
-    const checkInStatus = []
-    for (const day of dailyIntervals) {
-      const checkIn = await getCheckInStatusByDate(userId, day.toFormat('yyyy-MM-dd'))
-      checkInStatus.push(checkIn)
-    }
     return res.status(200).json({
       message: 'OK',
       data: checkInStatus
@@ -264,6 +260,41 @@ const getCheckInStatus = async (req, res) => {
   }
 }
 
+/**
+ * Get consecutive check-in data of the current user.
+ * @param req - Express request object.
+ * @param res - Express response object.
+ * @returns {Promise<*>}
+ */
+const getConsecutiveCheckin = async (req, res) => {
+  try {
+    const { _id: userId } = req.user
+
+    const consecutiveCheckin = await consecutiveCheckinModel.findOne({
+      userId
+    }).lean()
+
+    if (!consecutiveCheckin) {
+      return res.status(404).json({
+        error: {
+          message: 'NOT_FOUND'
+        }
+      })
+    }
+    consecutiveCheckin.lastBreak = consecutiveCheckin.lastBreak ? toLocal(consecutiveCheckin.lastBreak).toISO() : null
+    return res.status(200).json({
+      message: 'OK',
+      data: consecutiveCheckin
+    })
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({
+      error: {
+        message: 'INTERNAL_SERVER_ERROR'
+      }
+    })
+  }
+}
 /**
  * @description Get total point of user check-in.
  * @param {string} userId User ID.
@@ -314,9 +345,9 @@ const canCheckIn = (type) => {
 /**
  * @description Get consecutive check-in day of user.
  * @param {string} userId - User ID.
- * @returns {number} Consecutive check-in of current user
+ * @returns {number} Consecutive check-in day of user.
  */
-const getConsecutiveCheckiDay = async (userId) => {
+const getConsecutiveCheckInDay = async (userId) => {
   try {
     const consecutiveCheckin = await consecutiveCheckinModel.findOne({
       userId
@@ -375,7 +406,10 @@ const resetConsecutiveCheckinDay = async (userId) => {
         day: 0
       })
     } else {
-      await consecutiveCheckinModel.updateOne({ userId }, { day: 0 })
+      if (consecutiveCheckin.consecutiveDayRecord < consecutiveCheckin.day) {
+        await consecutiveCheckinModel.updateOne({ userId }, { lastBreak: Date.now(), consecutiveDayRecord: consecutiveCheckin.day })
+      }
+      await consecutiveCheckinModel.updateOne({ userId }, { lastBreak: Date.now(), day: 0 })
     }
   } catch (err) {
     throw new Error(err)
@@ -440,7 +474,7 @@ const reduceCheckInPoint = async (userId, point = 10) => {
 const markAsNotCheckedIn = async () => {
   try {
     const users = await userModel.find()
-    users.forEach(async (user) => {
+    for (const user of users) {
       const { _id: userId } = user
 
       const [morningCheckin, eveningCheckin] = await Promise.all([
@@ -485,7 +519,7 @@ const markAsNotCheckedIn = async () => {
       } else {
         await resetConsecutiveCheckinDay(userId)
       }
-    })
+    }
   } catch (err) {
     throw new Error(err)
   }
@@ -612,5 +646,6 @@ module.exports = {
   getTotalPoint,
   reduceCheckInPoint,
   getCheckInReport,
-  getCheckInStatus
+  getCheckInStatus,
+  getConsecutiveCheckin
 }

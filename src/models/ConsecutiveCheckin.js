@@ -5,7 +5,8 @@ const ConsecutiveCheckinSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User' },
     day: { type: Number },
-    lastBreak: { type: Date }
+    lastBreak: { type: Date, default: null },
+    consecutiveDayRecord: { type: Number, default: 0 }
   },
   {
     timestamps: true,
