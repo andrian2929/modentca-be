@@ -2,6 +2,7 @@ const { toLocal } = require('../utils/timeUtils')
 const { getTotalPoint, reduceCheckInPoint } = require('../controllers/checkinController')
 const rewardModel = require('../models/Reward')
 const redemptionHistoryModel = require('../models/RedemptionHistory')
+const { handleCloudinaryDelete } = require('../helpers/cloudinary')
 
 /**
  * Retrieve all rewards.
@@ -48,13 +49,20 @@ const getReward = async (req, res) => {
 const storeReward = async (req, res) => {
   try {
     const { name, description, point, stock, isAvailable } = req.body
+    let photo = null
+
+    if (req.uploadResult) {
+      const { public_id: publicId, secure_url: url } = req.uploadResult
+      photo = { publicId, url }
+    }
 
     const reward = await rewardModel.create({
       name,
       description,
       point,
       stock,
-      isAvailable
+      isAvailable,
+      photo
     })
 
     return res.status(201).json({
@@ -81,6 +89,8 @@ const storeReward = async (req, res) => {
 const updateReward = async (req, res) => {
   try {
     const { name, description, point, stock, isAvailable } = req.body
+    let photo = null
+
     const reward = await rewardModel.findById(req.params.id)
 
     if (!reward) {
@@ -91,13 +101,23 @@ const updateReward = async (req, res) => {
       })
     }
 
+    if (req.uploadResult) {
+      const { public_id: publicId, secure_url: url } = req.uploadResult
+      photo = { publicId, url }
+
+      if (reward.photo) {
+        await handleCloudinaryDelete(reward.photo.publicId)
+      }
+    }
+
     const updatedReward = await rewardModel.findByIdAndUpdate(req.params.id,
       {
         name: name || reward.name,
         description: description || reward.description,
         point: point || reward.point,
         stock: stock || reward.stock,
-        isAvailable: isAvailable || reward.isAvailable
+        isAvailable: isAvailable || reward.isAvailable,
+        photo: photo || reward.photo
       },
       { new: true })
 
@@ -237,7 +257,7 @@ const redeemReward = async (req, res) => {
   }
 }
 
-const redemtionHistory = async (req, res) => {
+const redemptionHistory = async (req, res) => {
   try {
     const redemptionHistories = await redemptionHistoryModel
       .find({
@@ -275,6 +295,7 @@ const formatResponse = (reward) => ({
   description: reward.description,
   point: reward.point,
   stock: reward.stock,
+  photo: reward.photo ?? null,
   isAvailable: reward.isAvailable,
   createdAt: toLocal(reward.createdAt),
   updatedAt: toLocal(reward.updatedAt)
@@ -313,5 +334,5 @@ module.exports = {
   deleteReward,
   showReward,
   redeemReward,
-  redemtionHistory
+  redemptionHistory
 }

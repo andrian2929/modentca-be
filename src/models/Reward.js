@@ -6,7 +6,7 @@ const RewardSchema = new Schema(
     name: { type: String, required: true },
     description: { type: String, required: true },
     point: { type: Number, required: true },
-    image: { type: String, default: null },
+    photo: { type: Schema.Types.Mixed, default: null },
     stock: { type: Number, required: true },
     isAvailable: { type: Boolean, default: true }
   },
