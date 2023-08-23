@@ -10,4 +10,4 @@ const handleDelete = async (publicId) => {
   return await cloudinary.uploader.destroy(publicId)
 }
 
-module.exports = { handleCloudinaryUpload: handleUpload, handleCloudinaryDelete: handleDelete }
+module.exports = { handleCloudinaryUpload: handleUpload, handleCloudinaryDelete: handleDelete, cloudinaryUrlTransform: cloudinary.url }

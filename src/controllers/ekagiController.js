@@ -1,5 +1,6 @@
 const ekagiModel = require('../models/Ekagi')
 const { handleCloudinaryDelete } = require('../helpers/cloudinary')
+const { toLocal } = require('../utils/timeUtils')
 
 const getEkagi = async (req, res) => {
   try {
@@ -129,14 +130,42 @@ const deleteEkagi = async (req, res) => {
   }
 }
 
+const showEkagi = async (req, res) => {
+  try {
+    const { id } = req.params
+    const ekagi = await ekagiModel.findById(id).lean()
+    if (!ekagi) {
+      res.status(404).json({
+        error: {
+          message: 'NOT_FOUND'
+        }
+      })
+    }
+    const formattedResponse = responseFormatter(ekagi)
+    res.status(200).json({
+      message: 'OK',
+      data: formattedResponse
+    })
+  } catch (err) {
+    console.log(err)
+    res.status(500)
+      .json({
+        error: {
+          message: 'INTERNAL_SERVER_ERROR'
+        }
+      })
+  }
+}
+
 const responseFormatter = (ekagi) => {
   return {
     id: ekagi._id,
     title: ekagi.title,
     thumbnail: ekagi.thumbnail,
     type: ekagi.type,
-    content: ekagi.content
+    content: ekagi.content,
+    createdAt: toLocal(ekagi.createdAt)
   }
 }
 
-module.exports = { getEkagi, storeEkagi, updateEkagi, deleteEkagi }
+module.exports = { getEkagi, storeEkagi, updateEkagi, deleteEkagi, showEkagi }

@@ -82,10 +82,24 @@ const checkIn = async (req, res) => {
 const checkInHistory = async (req, res) => {
   try {
     const { _id: userId } = req.user
+    const { date } = req.query
+    let endOfMonth
+    let startOfMonth
+    if (date) {
+      startOfMonth = createDateTime({
+        year: date.split('-')[0],
+        month: date.split('-')[1]
+      }).startOf('month').toJSDate()
 
-    const currentTime = getCurrentTime()
-    const startOfMonth = currentTime.startOf('month').toJSDate()
-    const endOfMonth = currentTime.endOf('month').toJSDate()
+      endOfMonth = createDateTime({
+        year: date.split('-')[0],
+        month: date.split('-')[1]
+      }).endOf('month').toJSDate()
+    } else {
+      const currentTime = getCurrentTime()
+      startOfMonth = currentTime.startOf('month').toJSDate()
+      endOfMonth = currentTime.endOf('month').toJSDate()
+    }
 
     const checkIn = await checkinModel.find({
       userId,
@@ -93,7 +107,7 @@ const checkInHistory = async (req, res) => {
         $gte: startOfMonth,
         $lt: endOfMonth
       }
-    }).sort({ checkinAt: 'asc' })
+    }).sort({ checkinAt: -1 })
 
     if (checkIn.length === 0) {
       return res.status(404).json({

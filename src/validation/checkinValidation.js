@@ -64,6 +64,15 @@ const getCheckInStatusSchema = joi.object({
   'object.unknown': 'UNKNOWN_FIELD_FOUND'
 })
 
+const getCheckInHistorySchema = joi.object({
+  date: joi.date().optional().format('YYYY-MM').messages({
+    'date.format': 'DATE_INVALID',
+    'date.base': 'DATE_MUST_BE_DATE'
+  })
+}).messages({
+  'object.unknown': 'UNKNOWN_FIELD_FOUND'
+})
+
 const checkIn = async (req, res, next) => {
   const { error } = CheckinSchema.validate(req.body)
   if (error) {
@@ -100,4 +109,16 @@ const getCheckInStatus = async (req, res, next) => {
   next()
 }
 
-module.exports = { checkIn, getCheckInReport, getCheckInStatus }
+const getCheckInHistory = async (req, res, next) => {
+  const { error } = getCheckInHistorySchema.validate(req.query)
+  if (error) {
+    return res.status(422).json({
+      error: {
+        message: error.details[0].message
+      }
+    })
+  }
+  next()
+}
+
+module.exports = { checkIn, getCheckInReport, getCheckInStatus, getCheckInHistory }

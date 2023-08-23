@@ -22,7 +22,6 @@ const getCariogramHistory = async (req, res) => {
       }
     } else if (startDate) {
       const [startYear, startMonth, startDay] = startDate.split('-')
-      console.log(createDateTime({ year: startYear, month: startMonth, day: startDay }).toJSDate())
       filter.createdAt = {
         $gte: createDateTime({ year: startYear, month: startMonth, day: startDay }).toJSDate()
       }
@@ -33,7 +32,7 @@ const getCariogramHistory = async (req, res) => {
       }
     }
 
-    const cariogramHistory = await cariogramHistoryModel.find(filter).lean()
+    const cariogramHistory = await cariogramHistoryModel.find(filter).sort({ createdAt: -1 }).lean()
     if (cariogramHistory.length < 1) {
       res.status(404).json({
         error: {
