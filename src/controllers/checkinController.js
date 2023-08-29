@@ -161,7 +161,7 @@ const checkInPointHistory = async (req, res) => {
       $gte: startOfMonth,
       $lt: endOfMonth
     }
-  }).sort({ createdAt: 'asc' })
+  }).sort({ createdAt: -1 })
 
   if (checkinPoint.length === 0) {
     return res.status(404).json({
@@ -209,6 +209,48 @@ const checkInPointHistory = async (req, res) => {
  */
 
 const checkInStatistic = async (req, res) => {
+  //
+  const { _id: userId } = req.user
+  const { date } = req.query
+
+  try {
+    let startDate, endDate
+    if (date) {
+      const [year, month, day] = date.split('-')
+      startDate = createDateTime({ year, month, day }).startOf('week')
+      endDate = createDateTime({ year, month, day }).endOf('week')
+    } else {
+      const currentTime = getCurrentTime()
+      startDate = currentTime.startOf('week')
+      endDate = currentTime.endOf('week')
+    }
+
+    const weekInterval = getInterval(startDate.toJSDate(), endDate.toJSDate())
+    const dailyIntervals = weekInterval.splitBy({ days: 1 }).map((d) => d.start)
+    const checkInStatus = await Promise.all(dailyIntervals.map((day) => getCheckInStatusByDate(userId, day.toFormat('yyyy-MM-dd'))))
+
+    const newCheckin = checkInStatus.map((item) => {
+      return {
+        date: item.date,
+        completed: item.morning + item.evening
+      }
+    })
+
+    return res.status(200).json({
+      message: 'OK',
+      data: newCheckin
+    }
+    )
+  } catch (err) {
+    return res.status(500).json({
+      error: {
+        message: 'INTERNAL_SERVER_ERROR'
+      }
+    })
+  }
+}
+
+const getCheckInSummary = async (req, res) => {
   const { _id: userId } = req.user
 
   try {
@@ -254,8 +296,8 @@ const getCheckInStatus = async (req, res) => {
       })
     }
 
-    const firstDayOfMonth = currentTime.startOf('month')
-    const lastDayOfMonth = currentTime.endOf('month')
+    const firstDayOfMonth = currentTime.startOf('month').toJSDate()
+    const lastDayOfMonth = currentTime.endOf('month').toJSDate()
     const monthInterval = getInterval(firstDayOfMonth, lastDayOfMonth)
     const dailyIntervals = monthInterval.splitBy({ days: 1 }).map((d) => d.start)
     const checkInStatus = await Promise.all(dailyIntervals.map((day) => getCheckInStatusByDate(userId, day.toFormat('yyyy-MM-dd'))))
@@ -661,5 +703,6 @@ module.exports = {
   reduceCheckInPoint,
   getCheckInReport,
   getCheckInStatus,
-  getConsecutiveCheckin
+  getConsecutiveCheckin,
+  getCheckInSummary
 }
