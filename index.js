@@ -13,8 +13,8 @@ require('./src/config/cron')
 const PORT = process.env.PORT || 3000
 
 const app = express()
-//
-app.use(cors({ origin: ['https://modentca-fe-production.up.railway.app/'] }))
+
+app.use(cors({ credentials: true }))
 app.use(compression())
 app.use(cookieParser())
 app.use(express.json())
