@@ -20,7 +20,7 @@ const registerUserSchema = joi.object({
     'string.max': 'USERNAME_MAX_32',
     'string.empty': 'USERNAME_REQUIRED'
   }),
-  parentEmail: joi.string().optional().email().max(255).messages({
+  parentEmail: joi.string().required().email().max(255).messages({
     'string.base': 'EMAIL_MUST_BE_STRING',
     'string.email': 'EMAIL_INVALID',
     'string.max': 'EMAIL_MAX_255',

@@ -16,16 +16,12 @@ const {
  * @returns {Object} - The response containing the created user data or an error message.
  */
 const signUp = async (req, res) => {
-  const { username, password } = req.body
   try {
-    const newUser = new UserModel({
-      username,
-      password
-    })
+    const newUser = new UserModel(req.body)
 
     await newUser.save()
 
-    const user = await UserModel.findOne({ username }).select('-password').lean()
+    const user = await UserModel.findOne({ username: req.body.username }).select('-password').lean()
 
     res.status(201).json({ message: 'CREATED', data: user })
   } catch (err) {
