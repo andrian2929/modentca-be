@@ -556,7 +556,7 @@ const markAsNotCheckedIn = async () => {
         await reduceCheckInPoint(userId)
         await pointHistoryModel.create({
           userId,
-          point: -10,
+          point: -5,
           type: 'out'
         })
       }
@@ -565,7 +565,7 @@ const markAsNotCheckedIn = async () => {
         await reduceCheckInPoint(userId)
         await pointHistoryModel.create({
           userId,
-          point: -10,
+          point: -5,
           type: 'out'
         })
       }
