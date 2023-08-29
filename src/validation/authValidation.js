@@ -33,13 +33,13 @@ const registerUserSchema = joi.object({
     'string.max': 'PASSWORD_MAX_255',
     'string.empty': 'PASSWORD_REQUIRED'
   }),
-  birthDate: joi.date().format('YYYY-MM-DD').required().messages({
+  birthDate: joi.date().optional().format('YYYY-MM-DD').messages({
     'any.required': 'BIRTH_DATE_REQUIRED',
     'date.base': 'BIRTH_DATE_INVALID',
     'date.empty': 'BIRTH_DATE_REQUIRED',
     'date.format': 'BIRTH_DATE_INVALID'
   }),
-  sex: joi.string().valid('L', 'P').required().messages({
+  sex: joi.string().optional().valid('L', 'P').messages({
     'string.base': 'SEX_MUST_BE_STRING',
     'any.only': 'SEX_INVALID',
     'any.required': 'SEX_REQUIRED',
