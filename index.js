@@ -18,7 +18,7 @@ app.use(compression())
 app.use(cookieParser())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-app.use(cors({ origin: 'https://modentca-fe-production.up.railway.app' }))
+app.use(cors())
 app.use(routes)
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
