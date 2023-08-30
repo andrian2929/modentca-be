@@ -14,11 +14,11 @@ const PORT = process.env.PORT || 3000
 
 const app = express()
 
-app.use(cors({ origin: '*' }))
 app.use(compression())
 app.use(cookieParser())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+app.use(cors({ origin: '*' }))
 app.use(routes)
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
