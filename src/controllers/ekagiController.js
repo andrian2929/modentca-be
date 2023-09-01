@@ -158,7 +158,7 @@ const showEkagi = async (req, res) => {
 }
 
 const responseFormatter = (ekagi) => {
-  return {
+  const response = {
     id: ekagi._id,
     title: ekagi.title,
     thumbnail: ekagi.thumbnail,
@@ -166,6 +166,16 @@ const responseFormatter = (ekagi) => {
     content: ekagi.content,
     createdAt: toLocal(ekagi.createdAt)
   }
+
+  if (ekagi.type === 'video') {
+    const videoIdMatch = ekagi.content.match(/youtu\.be\/([a-zA-Z0-9_-]+)/)
+    if (videoIdMatch) {
+      console.log(videoIdMatch)
+      response.video_id = videoIdMatch[1]
+    }
+  }
+
+  return response
 }
 
 module.exports = { getEkagi, storeEkagi, updateEkagi, deleteEkagi, showEkagi }
