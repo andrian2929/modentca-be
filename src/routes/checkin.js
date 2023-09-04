@@ -12,7 +12,8 @@ const {
   getCheckInReport,
   getCheckInStatus,
   getConsecutiveCheckin,
-  getCheckInSummary
+  getCheckInSummary,
+  getCheckInLeaderboard
 } = require('../controllers/checkinController')
 
 router.get('/report/:regionType/:regionId/:year/:month', checkInvalidation.getCheckInReport, getCheckInReport)
@@ -23,5 +24,6 @@ router.get('/statistic', auth.authenticateToken, checkInStatistic)
 router.get('/status', auth.authenticateToken, checkInvalidation.getCheckInStatus, getCheckInStatus)
 router.get('/consecutive', auth.authenticateToken, getConsecutiveCheckin)
 router.get('/summary', auth.authenticateToken, getCheckInSummary)
+router.get('/leaderboard', auth.authenticateToken, getCheckInLeaderboard)
 
 module.exports = router

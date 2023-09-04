@@ -464,8 +464,9 @@ const resetConsecutiveCheckinDay = async (userId) => {
     } else {
       if (consecutiveCheckin.consecutiveDayRecord < consecutiveCheckin.day) {
         await consecutiveCheckinModel.updateOne({ userId }, { lastBreak: Date.now(), consecutiveDayRecord: consecutiveCheckin.day })
+      } else {
+        await consecutiveCheckinModel.updateOne({ userId }, { lastBreak: Date.now(), day: 0 })
       }
-      await consecutiveCheckinModel.updateOne({ userId }, { lastBreak: Date.now(), day: 0 })
     }
   } catch (err) {
     throw new Error(err)
@@ -533,6 +534,8 @@ const markAsNotCheckedIn = async () => {
     for (const user of users) {
       const { _id: userId } = user
 
+      const checkintimeJsDate = checkInTime('morning').start
+
       const [morningCheckin, eveningCheckin] = await Promise.all([
         checkinModel.findOne({
           userId,
@@ -552,6 +555,8 @@ const markAsNotCheckedIn = async () => {
         })
       ])
 
+      console.log(morningCheckin, eveningCheckin)
+
       if (!morningCheckin) {
         await reduceCheckInPoint(userId)
         await pointHistoryModel.create({
@@ -570,7 +575,7 @@ const markAsNotCheckedIn = async () => {
         })
       }
 
-      if (morningCheckin || eveningCheckin) {
+      if (morningCheckin && eveningCheckin) {
         await addConsecutiveCheckinDay(userId)
       } else {
         await resetConsecutiveCheckinDay(userId)
@@ -693,6 +698,74 @@ const getCheckInStatusByDate = async (userId, date) => {
   }
 }
 
+const getCheckInLeaderboard = async (req, res) => {
+  try {
+    const averageCheckIns = await checkinModel.aggregate([
+      {
+        $match: {
+          checkinAt: {
+            $gte: getCurrentTime().startOf('month').toJSDate(),
+            $lt: getCurrentTime().endOf('month').toJSDate()
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      {
+        $unwind: '$user'
+      },
+      {
+        $group: {
+          _id: '$userId',
+          username: { $first: '$user.username' },
+          image: { $first: '$user.image' },
+          totalCount: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          user: '$_id',
+          username: 1,
+          image: 1,
+          totalCount: 1
+
+        }
+      },
+      {
+        $addFields: {
+          user: { $toObjectId: '$user' },
+          percentage: { $multiply: [{ $divide: ['$totalCount', 60] }, 100] }
+        }
+      },
+      {
+        $sort: { percentage: -1 }
+      },
+      {
+        $limit: 10
+      }
+
+    ])
+
+    return res.status(200).json({
+      message: 'OK',
+      data: averageCheckIns
+    })
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({
+      error: {
+        message: 'INTERNAL_SERVER_ERROR'
+      }
+    })
+  }
+}
+
 module.exports = {
   checkIn,
   checkInHistory,
@@ -704,5 +777,6 @@ module.exports = {
   getCheckInReport,
   getCheckInStatus,
   getConsecutiveCheckin,
-  getCheckInSummary
+  getCheckInSummary,
+  getCheckInLeaderboard
 }

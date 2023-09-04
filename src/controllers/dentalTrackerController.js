@@ -4,7 +4,7 @@ const { toLocal } = require('../utils/timeUtils')
 const getDentalTracker = async (req, res) => {
   try {
     const { _id: userId } = req.user
-    const dentalTracker = await dentalTrackerModel.find({ userId }).sort({ date: -1 }).lean()
+    const dentalTracker = await dentalTrackerModel.find({ userId }).sort({ createdAt: -1 }).lean()
     if (dentalTracker.length === 0) {
       res.status(404).json({
         error:

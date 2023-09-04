@@ -170,11 +170,9 @@ const responseFormatter = (ekagi) => {
   if (ekagi.type === 'video') {
     const videoIdMatch = ekagi.content.match(/youtu\.be\/([a-zA-Z0-9_-]+)/)
     if (videoIdMatch) {
-      console.log(videoIdMatch)
       response.video_id = videoIdMatch[1]
     }
   }
-
   return response
 }
 
