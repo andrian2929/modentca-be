@@ -1,5 +1,5 @@
 const cariogramHistoryModel = require('../models/CariogramHistory')
-const { createDateTime } = require('../utils/timeUtils')
+const { createDateTime, toLocal } = require('../utils/timeUtils')
 
 /**
  * @description Get cariogram histories of the current authenticated user
@@ -33,6 +33,7 @@ const getCariogramHistory = async (req, res) => {
     }
 
     const cariogramHistory = await cariogramHistoryModel.find(filter).sort({ createdAt: -1 }).lean()
+
     if (cariogramHistory.length < 1) {
       res.status(404).json({
         error: {
@@ -43,7 +44,7 @@ const getCariogramHistory = async (req, res) => {
 
     res.status(200).json({
       message: 'OK',
-      data: cariogramHistory
+      data: cariogramHistory.map((data) => responseFormatter(data))
     })
   } catch (err) {
 
@@ -94,6 +95,17 @@ const checkCariogram = async (req, res) => {
     return res
       .status(500)
       .json({ error: err })
+  }
+}
+
+const responseFormatter = (data) => {
+  return {
+    id: data._id,
+    userId: data.userId,
+    def: data.def,
+    result: data.result,
+    createdAt: toLocal(data.createdAt),
+    updatedAt: toLocal(data.updatedAt)
   }
 }
 

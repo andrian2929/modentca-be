@@ -211,7 +211,7 @@ const checkInPointHistory = async (req, res) => {
 const checkInStatistic = async (req, res) => {
   //
   const { _id: userId } = req.user
-  const { date } = req.query
+  const { date, type } = req.query
 
   try {
     let startDate, endDate
@@ -229,6 +229,7 @@ const checkInStatistic = async (req, res) => {
     const dailyIntervals = weekInterval.splitBy({ days: 1 }).map((d) => d.start)
     const checkInStatus = await Promise.all(dailyIntervals.map((day) => getCheckInStatusByDate(userId, day.toFormat('yyyy-MM-dd'))))
 
+    const arrayCheckin = []
     const newCheckin = checkInStatus.map((item) => {
       return {
         date: item.date,
@@ -236,12 +237,19 @@ const checkInStatistic = async (req, res) => {
       }
     })
 
+    if (type === 'array') {
+      return res.status(200).json({
+        message: 'OK',
+        data: newCheckin.map((item) => item.completed)
+      })
+    }
+
     return res.status(200).json({
       message: 'OK',
       data: newCheckin
-    }
-    )
+    })
   } catch (err) {
+    console.error(err)
     return res.status(500).json({
       error: {
         message: 'INTERNAL_SERVER_ERROR'
