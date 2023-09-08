@@ -16,22 +16,22 @@ const checkIn = async (req, res) => {
     const { _id: userId } = req.user
     const { type } = req.body
 
-    if (!canCheckIn(type)) {
-      return res.status(422).json({
-        error: {
-          message: 'CHECKIN_TIME_NOT_AVAILABLE'
-        }
-      })
-    }
-
-    const isExist = await hasCheckinIn(userId, type)
-    if (isExist) {
-      return res.status(422).json({
-        error: {
-          message: 'ALREADY_CHECKED_IN'
-        }
-      })
-    }
+    // if (!canCheckIn(type)) {
+    //   return res.status(422).json({
+    //     error: {
+    //       message: 'CHECKIN_TIME_NOT_AVAILABLE'
+    //     }
+    //   })
+    // }
+    //
+    // const isExist = await hasCheckinIn(userId, type)
+    // if (isExist) {
+    //   return res.status(422).json({
+    //     error: {
+    //       message: 'ALREADY_CHECKED_IN'
+    //     }
+    //   })
+    // }
 
     const checkin = await checkinModel.create({
       userId,
@@ -229,7 +229,6 @@ const checkInStatistic = async (req, res) => {
     const dailyIntervals = weekInterval.splitBy({ days: 1 }).map((d) => d.start)
     const checkInStatus = await Promise.all(dailyIntervals.map((day) => getCheckInStatusByDate(userId, day.toFormat('yyyy-MM-dd'))))
 
-    const arrayCheckin = []
     const newCheckin = checkInStatus.map((item) => {
       return {
         date: item.date,
