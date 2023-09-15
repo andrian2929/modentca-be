@@ -9,6 +9,7 @@ const cariogramRoutes = require('./cariogram')
 const rewardRoutes = require('./reward')
 const ekagiRoutes = require('./ekagi')
 const dentalTrackerRoutes = require('./dentalTracker')
+const adminRoutes = require('./admin')
 const router = Router()
 
 router.use('/cariogram', cariogramRoutes)
@@ -19,6 +20,7 @@ router.use('/checkin', checkinRoutes)
 router.use('/reward', rewardRoutes)
 router.use('/ekagi', authenticateToken, ekagiRoutes)
 router.use('/dental-tracker', authenticateToken, dentalTrackerRoutes)
+router.use('/admin', authenticateToken, adminRoutes)
 router.use('/', entryRoutes)
 
 module.exports = router
