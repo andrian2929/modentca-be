@@ -50,7 +50,7 @@ const checkInTime = (type) => {
     })
 
     const eveningEnd = DateTime.now().set({
-      hour: 22,
+      hour: 23,
       minute: 0,
       second: 0,
       millisecond: 0
