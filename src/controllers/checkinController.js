@@ -706,7 +706,10 @@ const getCheckInStatusByDate = async (userId, date) => {
 const getCheckInLeaderboard = async (req, res) => {
   try {
     const checkInLeaderBoard = await checkInPointModel.find().populate('userId', 'firstName lastName username image').sort({ point: -1 }).limit(10)
-    return res.status(200).json(checkInLeaderBoard)
+    return res.status(200).json({
+      message: 'OK',
+      data: checkInLeaderBoard
+    })
   } catch (err) {
     console.error(err)
     return res.status(500).json({
