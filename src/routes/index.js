@@ -20,7 +20,7 @@ router.use('/checkin', checkinRoutes)
 router.use('/reward', rewardRoutes)
 router.use('/ekagi', authenticateToken, ekagiRoutes)
 router.use('/dental-tracker', authenticateToken, dentalTrackerRoutes)
-router.use('/admin', authenticateToken, adminRoutes)
+router.use('/admin', adminRoutes)
 router.use('/', entryRoutes)
 
 module.exports = router
