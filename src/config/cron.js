@@ -2,7 +2,7 @@ const cron = require('node-cron')
 const { markAsNotCheckedIn } = require('../controllers/checkinController')
 
 const task = cron.schedule(
-  '00 22 * * *',
+  '30 23 * * *',
   async () => {
     await markAsNotCheckedIn()
     console.log('Cron job executed')
