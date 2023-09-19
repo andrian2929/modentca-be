@@ -1,4 +1,5 @@
 const UserModel = require('../../models/User')
+const { updateUserProfile } = require('../../controllers/userProfileController')
 const { toLocal } = require('../../utils/timeUtils')
 
 const getUser = async (req, res) => {
@@ -43,6 +44,20 @@ const showUser = async (req, res) => {
   }
 }
 
+const updateUser = async (req, res) => {
+  try {
+    req.user = {
+      _id: req.params.id
+    }
+
+    await updateUserProfile(req, res)
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ error: err })
+  }
+}
+
 const formatResponse = (user) => {
   user.createdAt = toLocal(user.createdAt).toISO()
   return user
@@ -50,5 +65,6 @@ const formatResponse = (user) => {
 
 module.exports = {
   getUser,
-  showUser
+  showUser,
+  updateUser
 }
