@@ -29,7 +29,7 @@ const checkInTime = (type) => {
     })
 
     const morningEnd = DateTime.now().set({
-      hour: 15,
+      hour: 13,
       minute: 0,
       second: 0,
       millisecond: 0
