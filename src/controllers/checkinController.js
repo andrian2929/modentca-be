@@ -382,7 +382,8 @@ const getTotalPoint = async (userId) => {
  * @returns {boolean} True if a check-in exists, false otherwise.
  */
 const hasCheckinIn = async (userId, type) => {
-  const { start, end } = checkInTime(type)
+  console.log(getCurrentTime())
+  const { start, end } = checkInTime(type, getCurrentTime())
   const checkin = await checkinModel.findOne({
     userId,
     type,
@@ -400,7 +401,7 @@ const hasCheckinIn = async (userId, type) => {
  * @returns {boolean} True if the current time is within the check-in time, false otherwise.
  */
 const canCheckIn = (type) => {
-  const { start, end } = checkInTime(type)
+  const { start, end } = checkInTime(type, getCurrentTime())
   const currentTime = Date.now()
   return currentTime >= start && currentTime <= end
 }
@@ -546,16 +547,16 @@ const markAsNotCheckedIn = async () => {
           userId,
           type: 'morning',
           checkinAt: {
-            $gte: checkInTime('morning').start,
-            $lt: checkInTime('morning').end
+            $gte: checkInTime('morning', getCurrentTime()).start,
+            $lt: checkInTime('morning', getCurrentTime()).end
           }
         }),
         checkinModel.findOne({
           userId,
           type: 'evening',
           checkinAt: {
-            $gte: checkInTime('evening').start,
-            $lt: checkInTime('evening').end
+            $gte: checkInTime('evening', getCurrentTime()).start,
+            $lt: checkInTime('evening', getCurrentTime()).end
           }
         })
       ])

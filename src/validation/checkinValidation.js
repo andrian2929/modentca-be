@@ -13,6 +13,26 @@ const CheckinSchema = joi
     'object.unknown': 'UNKNOWN_FIELD_FOUND'
   })
 
+const adminCheckInSchema = joi
+  .object({
+    type: joi.string().required().valid('morning', 'evening').messages({
+      'any.required': 'TYPE_REQUIRED',
+      'string.base': 'TYPE_MUST_BE_STRING',
+      'any.only': 'TYPE_INVALID'
+    }),
+    userId: joi.string().required().messages({
+      'any.required': 'USER_ID_REQUIRED',
+      'string.base': 'USER_ID_MUST_BE_STRING',
+      'string.empty': 'USER_ID_REQUIRED'
+    }),
+    date: joi.date().required().format('YYYY-MM-DD').messages({
+      'any.required': 'DATE_REQUIRED',
+      'string.base': 'DATE_MUST_BE_STRING',
+      'string.empty': 'DATE_REQUIRED',
+      'date.format': 'DATE_INVALID'
+    })
+  })
+
 const getCheckInReportSchema = joi
   .object({
     regionType: joi
@@ -121,4 +141,23 @@ const getCheckInHistory = async (req, res, next) => {
   next()
 }
 
-module.exports = { checkIn, getCheckInReport, getCheckInStatus, getCheckInHistory }
+const createAdminCheckIn = async (req, res, next) => {
+  const { error } = adminCheckInSchema.validate(req.body)
+  if (error) {
+    return res.status(422).json({
+      error: {
+        message: error.details[0].message
+      }
+    })
+  }
+
+  next()
+}
+
+module.exports = {
+  checkIn,
+  getCheckInReport,
+  getCheckInStatus,
+  getCheckInHistory,
+  createAdminCheckIn
+}

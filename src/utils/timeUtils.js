@@ -15,20 +15,24 @@ const toLocal = (time) => {
   return DateTime.fromJSDate(time)
 }
 
+const toLocalFromIso = (time) => {
+  return DateTime.fromISO(time)
+}
+
 const createDateTime = (config) => {
   return DateTime.fromObject(config)
 }
 
-const checkInTime = (type) => {
+const checkInTime = (type, time) => {
   if (type === 'morning') {
-    const morningStart = DateTime.now().set({
+    const morningStart = time.set({
       hour: 4,
       minute: 0,
       second: 0,
       millisecond: 0
     })
 
-    const morningEnd = DateTime.now().set({
+    const morningEnd = time.set({
       hour: 13,
       minute: 0,
       second: 0,
@@ -42,14 +46,14 @@ const checkInTime = (type) => {
   }
 
   if (type === 'evening') {
-    const eveningStart = DateTime.now().set({
+    const eveningStart = time.set({
       hour: 16,
       minute: 0,
       second: 0,
       millisecond: 0
     })
 
-    const eveningEnd = DateTime.now().set({
+    const eveningEnd = time.set({
       hour: 23,
       minute: 0,
       second: 0,
@@ -73,5 +77,6 @@ module.exports = {
   toUTC,
   toLocal,
   checkInTime,
-  getInterval
+  getInterval,
+  toLocalFromIso
 }
