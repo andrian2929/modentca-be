@@ -261,7 +261,12 @@ const getCheckInSummary = async (req, res) => {
   const { _id: userId } = req.user
 
   try {
-    const { month, year } = getCurrentTime()
+    // const { month, year } = getCurrentTime()
+    const { month, year } = createDateTime({
+      year: 2023,
+      month: 9
+    })
+
     const totalPoint = await getTotalPoint(userId)
     const consecutiveCheckInDay = await getConsecutiveCheckInDay(userId)
     const checkInPercentage = await checkInReport(userId, year, month)
@@ -294,7 +299,12 @@ const getCheckInStatus = async (req, res) => {
   try {
     const { _id: userId } = req.user
     const { date } = req.query
-    const currentTime = getCurrentTime()
+
+    // const currentTime = getCurrentTime()
+    const currentTime = createDateTime({
+      year: 2023,
+      month: 9
+    })
     if (date) {
       const checkInStatus = await getCheckInStatusByDate(userId, date)
       return res.status(200).json({
